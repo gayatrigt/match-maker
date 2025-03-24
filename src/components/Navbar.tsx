@@ -1,4 +1,4 @@
-import { Box, HStack, Text, Button, Container, Flex, Link as ChakraLink, Hide } from '@chakra-ui/react';
+import { Box, HStack, Button, Container, Flex, Link as ChakraLink, Hide } from '@chakra-ui/react';
 import { Link as RouterLink } from 'react-router-dom';
 import { usePrivy } from '@privy-io/react-auth';
 import { UserProfile } from './UserProfile';

@@ -34,7 +34,7 @@ const pulseAnimation = keyframes`
 
 const Game = () => {
   const { user } = usePrivy();
-  const { stats, updateStats, markNFTMinted } = usePlayerStats();
+  const { stats, updateStats } = usePlayerStats();
   const toast = useToast();
   const [isProcessing, setIsProcessing] = useState(false);
   const [showSaveScore, setShowSaveScore] = useState(false);
@@ -55,8 +55,6 @@ const Game = () => {
     setCurrentSet,
     score,
     setScore,
-    totalAttempts,
-    setTotalAttempts,
     initializeGame,
     resetGame,
   } = useGame();
@@ -164,7 +162,6 @@ const Game = () => {
       setIsProcessing(true);
       const firstCard = cards[selectedCards[0]];
       const secondCard = cards[cardId];
-      setTotalAttempts(prev => prev + 1);
 
       if (firstCard.text === secondCard.text) {
         setTimeout(() => {

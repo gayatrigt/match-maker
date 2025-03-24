@@ -1,65 +1,60 @@
 import { useCallback } from 'react';
-import { usePrivy, useWallets } from '@privy-io/react-auth';
 import { ethers } from 'ethers';
+import AchievementNFT from '../contracts/AchievementNFT.json';
+import { usePrivy } from '@privy-io/react-auth';
 
-const NFT_CONTRACT_ADDRESS = import.meta.env.VITE_NFT_CONTRACT_ADDRESS;
-
-const NFT_ABI = [
-  "function claimAchievement() external",
-  "function hasClaimed(address) external view returns (bool)",
-  "function verifiedScores(address) external view returns (uint256)"
-];
-
-export function useNFTContract() {
+export const useNFTContract = () => {
   const { user } = usePrivy();
-  const { wallets } = useWallets();
+  const contractAddress = import.meta.env.VITE_NFT_CONTRACT_ADDRESS;
 
-  const claimNFT = useCallback(async () => {
-    if (!user?.wallet?.address || !wallets?.[0]) {
-      throw new Error('Wallet not connected');
+  const getContract = useCallback(async () => {
+    if (!user?.wallet?.address) {
+      throw new Error('No wallet connected');
     }
 
     try {
-      const provider = await wallets[0].getEthersProvider();
+      const provider = new ethers.BrowserProvider(window.ethereum);
       const signer = await provider.getSigner();
-      const contract = new ethers.Contract(NFT_CONTRACT_ADDRESS, NFT_ABI, signer);
-
-      const tx = await contract.claimAchievement();
-      await tx.wait();
-
-      return true;
+      return new ethers.Contract(
+        contractAddress,
+        AchievementNFT.abi,
+        signer
+      );
     } catch (error) {
-      console.error('Error claiming NFT:', error);
+      console.error('Error getting contract:', error);
       throw error;
     }
-  }, [user?.wallet?.address, wallets]);
+  }, [user?.wallet?.address]);
+
+  const claimNFT = useCallback(async () => {
+    try {
+      const contract = await getContract();
+      const tx = await contract.mint();
+      await tx.wait();
+      return true;
+    } catch (error) {
+      console.error('Error minting NFT:', error);
+      throw error;
+    }
+  }, [getContract]);
 
   const checkEligibility = useCallback(async () => {
-    if (!user?.wallet?.address || !wallets?.[0]) {
-      return { hasClaimed: false, verifiedScore: 0 };
-    }
-
     try {
-      const provider = await wallets[0].getEthersProvider();
-      const contract = new ethers.Contract(NFT_CONTRACT_ADDRESS, NFT_ABI, provider);
-
-      const [claimed, score] = await Promise.all([
-        contract.hasClaimed(user.wallet.address),
-        contract.verifiedScores(user.wallet.address)
-      ]);
-
+      const contract = await getContract();
+      const hasClaimed = await contract.hasClaimed(user?.wallet?.address);
+      const verifiedScore = await contract.getVerifiedScore(user?.wallet?.address);
       return {
-        hasClaimed: claimed,
-        verifiedScore: score.toNumber()
+        hasClaimed,
+        verifiedScore: verifiedScore.toNumber()
       };
     } catch (error) {
       console.error('Error checking eligibility:', error);
-      return { hasClaimed: false, verifiedScore: 0 };
+      throw error;
     }
-  }, [user?.wallet?.address, wallets]);
+  }, [getContract, user?.wallet?.address]);
 
   return {
     claimNFT,
     checkEligibility
   };
-} 
+}; 
