@@ -40,7 +40,7 @@ export function usePlayerStats() {
   };
 
   // Update player stats
-  const updateStats = useCallback(async (newScore: number, xpIncrease: number = 0) => {
+  const updateStats = useCallback(async (newScore: number) => {
     if (!user?.wallet?.address) {
       console.log('No wallet address found');
       return;
@@ -49,8 +49,7 @@ export function usePlayerStats() {
     try {
       console.log('Starting updateStats with:', { 
         walletAddress: user.wallet.address,
-        newScore, 
-        xpIncrease,
+        newScore,
         currentStats: stats
       });
 
@@ -68,7 +67,7 @@ export function usePlayerStats() {
 
       // Calculate the final values
       const finalScore = Math.max(currentStats?.score || 0, newScore);
-      const finalXP = (currentStats?.xp || 0) + xpIncrease;
+      const finalXP = calculateXP(finalScore);
 
       console.log('Calculated final values:', { finalScore, finalXP });
 
@@ -112,7 +111,7 @@ export function usePlayerStats() {
     } catch (error) {
       console.error('Error in updateStats:', error);
     }
-  }, [user?.wallet?.address, stats]);
+  }, [user?.wallet?.address, stats, calculateXP]);
 
   // Mark NFT as minted
   const markNFTMinted = useCallback(async () => {
