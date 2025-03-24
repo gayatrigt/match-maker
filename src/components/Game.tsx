@@ -68,7 +68,7 @@ const Game = () => {
       
       // Load initial stats
       if (user?.wallet?.address) {
-        const response = await updateStats(0, 0);
+        const response = await updateStats(0);
         if (response) {
           setHighestScore(response.score);
         }
@@ -99,13 +99,13 @@ const Game = () => {
       if (user?.wallet?.address) {
         console.log('Updating stats with XP increase');
         try {
-          const response = await updateStats(Math.max(newScore, highestScore), 1);
+          const response = await updateStats(Math.max(newScore, highestScore));
           
           if (response) {
             setHighestScore(Math.max(response.score, highestScore));
             toast({
               title: "Set Complete!",
-              description: `+1 XP earned! Moving to Set ${nextSetIndex + 1}`,
+              description: `Set completed! Moving to Set ${nextSetIndex + 1}`,
               status: "success",
               duration: 2000,
               isClosable: true,
