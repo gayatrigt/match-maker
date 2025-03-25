@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { usePrivy } from '@privy-io/react-auth';
+import { useEnsName } from 'wagmi';
 import 'nes.css/css/nes.min.css';
 import './UserProfile.css';
 
@@ -10,8 +11,14 @@ interface UserIdentity {
 
 export const UserProfile: React.FC = () => {
   const { user, authenticated } = usePrivy();
-  const [identities, setIdentities] = useState<UserIdentity>({});
   const [loading, setLoading] = useState(true);
+  const [farcasterUsername, setFarcasterUsername] = useState<string | undefined>();
+  
+  // Get ENS name from wallet address
+  const { data: ensName } = useEnsName({ 
+    address: user?.wallet?.address as `0x${string}` | undefined,
+    chainId: 1 // Mainnet
+  });
 
   useEffect(() => {
     const fetchIdentities = async () => {
@@ -31,22 +38,12 @@ export const UserProfile: React.FC = () => {
           }
           return false;
         });
+        
+        if (farcasterAccount) {
+          setFarcasterUsername((farcasterAccount as { username: string }).username);
+        }
+        
         console.log('Farcaster account:', farcasterAccount);
-
-        // Check for ENS in email
-        const emailAccount = user.linkedAccounts?.find(account => {
-          if (account.type === 'email') {
-            const emailData = account as { email?: string };
-            return emailData.email && emailData.email.endsWith('.eth');
-          }
-          return false;
-        });
-        console.log('Email account with ENS:', emailAccount);
-
-        setIdentities({
-          farcaster: farcasterAccount ? (farcasterAccount as { username: string }).username : undefined,
-          ens: emailAccount ? (emailAccount as { email: string }).email : undefined
-        });
       } catch (error) {
         console.error('Error fetching identities:', error);
       } finally {
@@ -65,13 +62,18 @@ export const UserProfile: React.FC = () => {
     `${user.wallet.address.slice(0, 6)}...${user.wallet.address.slice(-4)}` : 
     '';
 
+  // Display priority: Farcaster > ENS > Wallet Address
+  const displayName = farcasterUsername ? 
+    `@${farcasterUsername}` : 
+    ensName || displayAddress;
+
   return (
     <div className="user-profile">
       {loading ? (
         <div className="loading-spinner" />
       ) : (
         <span className="nes-text">
-          {identities.farcaster || identities.ens || displayAddress}
+          {displayName}
         </span>
       )}
     </div>
