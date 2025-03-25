@@ -33,7 +33,7 @@ const pulseAnimation = keyframes`
 
 const Game = () => {
   const { user } = usePrivy();
-  const { updateStats } = usePlayerStats();
+  const { updateStats, stats } = usePlayerStats();
   const toast = useToast();
   const [isProcessing, setIsProcessing] = useState(false);
   const [showSaveScore, setShowSaveScore] = useState(false);
@@ -56,6 +56,20 @@ const Game = () => {
     initializeGame,
     resetGame,
   } = useGame();
+
+  const getCardColor = (card: Card) => {
+    if (card.isMatched) return 'green.100';
+    if (card.isIncorrect) return 'red.100';
+    if (card.isSelected) return 'blue.50';
+    return 'white';
+  };
+
+  const getCardAnimation = (card: Card) => {
+    if (card.isMatched || card.isIncorrect) {
+      return `${pulseAnimation} 0.5s ease-in-out`;
+    }
+    return 'none';
+  };
 
   // Start game
   const startGame = async () => {
@@ -95,7 +109,7 @@ const Game = () => {
       console.log('Moving to next set. Current set:', currentSet, 'Next set:', nextSetIndex, 'Score:', newScore);
       
       if (user?.wallet?.address) {
-        console.log('Updating stats with XP increase');
+        console.log('Updating stats');
         try {
           const response = await updateStats(Math.max(newScore, highestScore));
           
@@ -103,7 +117,7 @@ const Game = () => {
             setHighestScore(Math.max(response.score, highestScore));
             toast({
               title: "Set Complete!",
-              description: `Set completed! Moving to Set ${nextSetIndex + 1}`,
+              description: `Moving to Set ${nextSetIndex + 1}`,
               status: "success",
               duration: 2000,
               isClosable: true,
@@ -123,9 +137,7 @@ const Game = () => {
         });
       }
       
-      // First update the current set
       setCurrentSet(nextSetIndex);
-      // Then initialize the game with the new set
       setTimeout(() => {
         console.log('Initializing game for set:', nextSetIndex);
         setMatchedPairs(0);
@@ -197,11 +209,9 @@ const Game = () => {
         
         const correct = firstCard.type === 'term' ? correctPair?.definition : correctPair?.term;
 
-        // Clear any existing error state first
         setShowSaveScore(false);
         setCorrectAnswer('');
         
-        // Small delay to ensure clean state before showing new error
         setTimeout(() => {
           setCorrectAnswer(correct || '');
           updatedCards[selectedCards[0]].isIncorrect = true;
@@ -233,74 +243,178 @@ const Game = () => {
     }
   }, [matchedPairs]);
 
-  const getCardColor = (card: Card) => {
-    if (card.isMatched) return 'green.100';
-    if (card.isIncorrect) return 'red.100';
-    if (card.isSelected) return 'blue.50';
-    return 'white';
-  };
-
   return (
-    <Container maxW="container.lg" py={8}>
-      <VStack spacing={6} align="stretch">
-        {!gameStarted ? (
-          <VStack spacing={4}>
-            <Text fontSize="2xl" fontWeight="bold">
-              Memory Game
-            </Text>
-            <Button colorScheme="blue" onClick={startGame}>
+    <Box minH="100vh" bg="#FF8B8B">
+      <Container maxW="container.md" py={{ base: 16, md: 20 }} px={{ base: 4, md: 6 }}>
+        <VStack spacing={6}>
+          {/* Top bar */}
+          <HStack w="full" justify="space-between" color="white">
+            <VStack spacing={2} w="full" px={{ base: 2, md: 6 }}>
+              <Progress
+                value={(matchedPairs / 5) * 100}
+                size="md"
+                colorScheme="whiteAlpha"
+                bg="whiteAlpha.300"
+                borderRadius="full"
+                w="full"
+              />
+              <HStack spacing={4} justify="center" fontSize={{ base: "sm", md: "lg" }}>
+                <Text color="white" fontWeight="bold">
+                  Score: {score}
+                </Text>
+                <Text color="white" fontWeight="bold">
+                  Best: {highestScore}
+                </Text>
+                <Text color="white" fontWeight="bold">
+                  XP: {stats?.xp || 0}
+                </Text>
+              </HStack>
+            </VStack>
+          </HStack>
+
+          {/* Instructions */}
+          <Text
+            color="white"
+            fontSize={{ base: "lg", md: "2xl" }}
+            fontWeight="semibold"
+            textAlign="center"
+            mb={4}
+          >
+            Match the Web3 terms with their definitions
+          </Text>
+
+          {/* Game grid */}
+          <SimpleGrid
+            columns={2}
+            spacing={{ base: 4, md: 8 }}
+            w="full"
+            px={{ base: 0, md: 2 }}
+          >
+            {/* Terms Column */}
+            <VStack spacing={{ base: 2, md: 3 }} align="stretch">
+              {cards.filter(card => card.type === 'term').map((card) => (
+                <Button
+                  key={card.id}
+                  w="full"
+                  h={{ base: "80px", md: "100px" }}
+                  bg={getCardColor(card)}
+                  color="gray.700"
+                  fontSize={{ base: "sm", md: "lg" }}
+                  fontWeight="normal"
+                  borderRadius="2xl"
+                  _hover={{ bg: getCardColor(card) }}
+                  _active={{ bg: getCardColor(card) }}
+                  boxShadow="none"
+                  onClick={() => handleCardClick(cards.indexOf(card))}
+                  disabled={card.isMatched || !gameStarted}
+                  p={{ base: 2, md: 4 }}
+                  whiteSpace="normal"
+                  textAlign="center"
+                  border="none"
+                  transition="all 0.2s"
+                  animation={getCardAnimation(card)}
+                >
+                  {card.text}
+                </Button>
+              ))}
+            </VStack>
+
+            {/* Definitions Column */}
+            <VStack spacing={{ base: 2, md: 3 }} align="stretch">
+              {cards.filter(card => card.type === 'definition').map((card) => (
+                <Button
+                  key={card.id}
+                  w="full"
+                  h={{ base: "80px", md: "100px" }}
+                  bg={getCardColor(card)}
+                  color="gray.700"
+                  fontSize={{ base: "xs", md: "md" }}
+                  fontWeight="normal"
+                  borderRadius="2xl"
+                  _hover={{ bg: getCardColor(card) }}
+                  _active={{ bg: getCardColor(card) }}
+                  boxShadow="none"
+                  onClick={() => handleCardClick(cards.indexOf(card))}
+                  disabled={card.isMatched || !gameStarted}
+                  p={{ base: 2, md: 4 }}
+                  whiteSpace="normal"
+                  textAlign="center"
+                  border="none"
+                  transition="all 0.2s"
+                  animation={getCardAnimation(card)}
+                >
+                  {card.text}
+                </Button>
+              ))}
+            </VStack>
+          </SimpleGrid>
+
+          {/* Start button */}
+          {!gameStarted && (
+            <Button
+              position="fixed"
+              bottom={8}
+              left="50%"
+              transform="translateX(-50%)"
+              bg="white"
+              color="gray.700"
+              size={{ base: "md", md: "lg" }}
+              fontSize={{ base: "lg", md: "xl" }}
+              py={{ base: 5, md: 7 }}
+              px={{ base: 8, md: 12 }}
+              borderRadius="2xl"
+              onClick={startGame}
+            >
               Start Game
             </Button>
-          </VStack>
-        ) : (
-          <>
-            <HStack justify="space-between">
-              <Text>Set: {currentSet + 1}</Text>
-              <Text>Score: {score}</Text>
-              {user?.wallet?.address && (
-                <Text>High Score: {highestScore}</Text>
-              )}
-            </HStack>
-            <Progress value={(matchedPairs / 5) * 100} colorScheme="green" />
-            <SimpleGrid columns={5} spacing={4}>
-              {cards.map((card) => (
-                <Box
-                  key={card.id}
-                  p={4}
-                  bg={getCardColor(card)}
-                  borderRadius="md"
-                  cursor={card.isMatched ? 'default' : 'pointer'}
-                  onClick={() => handleCardClick(card.id)}
-                  textAlign="center"
-                  height="100px"
-                  display="flex"
-                  alignItems="center"
-                  justifyContent="center"
-                  transition="all 0.2s"
-                  animation={
-                    card.isSelected
-                      ? `${pulseAnimation} 0.5s ease-in-out`
-                      : undefined
-                  }
-                  _hover={
-                    !card.isMatched && !isProcessing
-                      ? { transform: 'scale(1.05)' }
-                      : undefined
-                  }
+          )}
+
+          {/* Error Dialog */}
+          {showSaveScore && (
+            <Box
+              position="fixed"
+              top="50%"
+              left="50%"
+              transform="translate(-50%, -50%)"
+              bg="white"
+              p={{ base: 4, md: 6 }}
+              borderRadius="xl"
+              boxShadow="xl"
+              zIndex={10}
+              textAlign="center"
+              mx={4}
+              maxW="90vw"
+            >
+              <VStack spacing={4}>
+                <Text fontSize={{ base: "lg", md: "xl" }} fontWeight="bold" color="gray.700">
+                  Wrong Match!
+                </Text>
+                <VStack spacing={2}>
+                  <Text color="gray.600" fontSize={{ base: "sm", md: "md" }}>
+                    The correct match was:
+                  </Text>
+                  <Text color="blue.600" fontWeight="semibold" fontSize={{ base: "sm", md: "md" }}>
+                    {cards[selectedCards[0]]?.text} → {correctAnswer}
+                  </Text>
+                </VStack>
+                <Button
+                  colorScheme="blue"
+                  onClick={() => {
+                    setScore(0);
+                    setMatchedPairs(0);
+                    initializeGame(currentSet);
+                    setShowSaveScore(false);
+                  }}
+                  size={{ base: "sm", md: "md" }}
                 >
-                  <Text>{card.isSelected || card.isMatched ? card.text : '?'}</Text>
-                </Box>
-              ))}
-            </SimpleGrid>
-            {showSaveScore && correctAnswer && (
-              <Box textAlign="center" color="red.500">
-                <Text>Incorrect match! The correct match was: {correctAnswer}</Text>
-              </Box>
-            )}
-          </>
-        )}
-      </VStack>
-    </Container>
+                  Restart Set
+                </Button>
+              </VStack>
+            </Box>
+          )}
+        </VStack>
+      </Container>
+    </Box>
   );
 };
 

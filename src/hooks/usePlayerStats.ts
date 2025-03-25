@@ -28,14 +28,15 @@ export function usePlayerStats() {
 
   // Calculate XP based on score and other factors
   const calculateXP = (score: number): number => {
-    // Base XP is equal to score
-    let xp = score;
+    // Base XP is equal to score multiplied by 10
+    let xp = score * 10;
     
     // Bonus XP for milestones
-    if (score >= 100) xp += 1000; // Achievement NFT milestone
+    if (score >= 100) xp += 1000; // Achievement milestone
     if (score >= 50) xp += 500;   // Half-way milestone
     if (score >= 25) xp += 250;   // Quarter-way milestone
-    
+
+    console.log('Calculated XP:', { score, xp });
     return xp;
   };
 
@@ -69,7 +70,12 @@ export function usePlayerStats() {
       const finalScore = Math.max(currentStats?.score || 0, newScore);
       const finalXP = calculateXP(finalScore);
 
-      console.log('Calculated final values:', { finalScore, finalXP });
+      console.log('Calculated final values:', { 
+        finalScore, 
+        finalXP,
+        currentScore: currentStats?.score || 0,
+        currentXP: currentStats?.xp || 0
+      });
 
       // Upsert the record with ON CONFLICT DO UPDATE
       const { data: upsertResponse, error: upsertError } = await supabase
@@ -97,11 +103,15 @@ export function usePlayerStats() {
       console.log('Upsert successful. Response:', upsertResponse);
 
       // Update local state with the new values
-      setStats(prev => ({
-        ...prev,
-        score: finalScore,
-        xp: finalXP
-      }));
+      setStats(prev => {
+        const newStats = {
+          ...prev,
+          score: finalScore,
+          xp: finalXP
+        };
+        console.log('Updating local stats:', { prev, new: newStats });
+        return newStats;
+      });
 
       return {
         score: finalScore,
