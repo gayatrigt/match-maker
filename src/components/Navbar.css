@@ -1,0 +1,158 @@
+.navbar {
+  background: white;
+  padding: 0.75rem;
+  border-bottom: 4px solid #000;
+  height: 60px;
+  display: flex;
+  align-items: center;
+}
+
+.navbar-content {
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 1rem;
+}
+
+.navbar-left,
+.navbar-center,
+.navbar-right {
+  flex: 1;
+  display: flex;
+  align-items: center;
+}
+
+.navbar-left {
+  justify-content: flex-start;
+}
+
+.navbar-center {
+  justify-content: center;
+  font-size: 1.25rem;
+}
+
+.navbar-right {
+  justify-content: flex-end;
+  gap: 1rem;
+}
+
+.navbar a {
+  text-decoration: none;
+}
+
+.navbar-brand {
+  font-size: 1.25rem;
+}
+
+.navbar-links {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.wallet-info {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.nes-btn {
+  font-size: 0.875rem;
+  padding: 0.75rem 1.5rem;
+}
+
+.nes-btn.is-primary {
+  min-width: 160px;
+}
+
+.nes-btn.is-error {
+  min-width: 120px;
+}
+
+/* Button styles for both Connect Wallet and Logout */
+.navbar-right .nes-btn {
+  font-size: 0.75rem;
+  padding: 0.5rem 1rem;
+  height: auto !important;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+
+.navbar-right .nes-btn.is-primary {
+  min-width: 120px;
+}
+
+.navbar-right .nes-btn.is-error {
+  min-width: 100px;
+}
+
+@media (max-width: 768px) {
+  .navbar {
+    padding: 0.5rem;
+    height: 50px;
+  }
+
+  .navbar-content {
+    padding: 0 0.5rem;
+  }
+
+  .navbar-center {
+    font-size: 1rem;
+  }
+
+  .navbar-left .nes-text,
+  .navbar-right .nes-text {
+    font-size: 0.75rem;
+  }
+
+  .navbar-links {
+    gap: 0.5rem;
+  }
+
+  .wallet-info {
+    gap: 0.5rem;
+  }
+
+  /* Smaller buttons on mobile */
+  .navbar-right .nes-btn {
+    font-size: 0.6rem;
+    padding: 0.25rem 0.5rem;
+    height: 30px !important;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .navbar-right .nes-btn.is-primary {
+    min-width: 60px;
+  }
+
+  .navbar-right .nes-btn.is-error {
+    min-width: 60px;
+  }
+
+  /* Hide wallet address on mobile */
+  .navbar-right .user-profile {
+    display: none;
+  }
+
+  .nes-btn {
+    font-size: 0.75rem;
+    padding: 0.5rem 1rem;
+  }
+
+  .nes-btn.is-primary {
+    min-width: 120px;
+  }
+
+  .nes-btn.is-error {
+    font-size: 0.65rem;
+    padding: 0.4rem 0.8rem;
+    min-width: 80px;
+  }
+} 

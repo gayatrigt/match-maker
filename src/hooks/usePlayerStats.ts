@@ -26,18 +26,11 @@ export function usePlayerStats() {
     achievement_nft_minted: false
   });
 
-  // Calculate XP based on score and other factors
+  // Calculate XP based on score (1 set = 1 XP)
   const calculateXP = (score: number): number => {
-    // Base XP is equal to score multiplied by 10
-    let xp = score * 10;
-    
-    // Bonus XP for milestones
-    if (score >= 100) xp += 1000; // Achievement milestone
-    if (score >= 50) xp += 500;   // Half-way milestone
-    if (score >= 25) xp += 250;   // Quarter-way milestone
-
-    console.log('Calculated XP:', { score, xp });
-    return xp;
+    // Each completed set (5 matches) equals 1 XP
+    const completedSets = Math.floor(score / 5);
+    return completedSets;
   };
 
   // Update player stats
@@ -171,9 +164,35 @@ export function usePlayerStats() {
     loadStats();
   }, [user?.wallet?.address]);
 
+  // Get leaderboard data
+  const getLeaderboard = useCallback(async () => {
+    try {
+      const { data, error } = await supabase
+        .from('leaderboard')
+        .select('wallet_address, score, xp')
+        .order('score', { ascending: false })
+        .limit(10);
+
+      if (error) {
+        console.error('Error fetching leaderboard:', error);
+        return [];
+      }
+
+      return data.map(entry => ({
+        address: entry.wallet_address,
+        score: entry.score,
+        xp: entry.xp
+      }));
+    } catch (error) {
+      console.error('Error in getLeaderboard:', error);
+      return [];
+    }
+  }, []);
+
   return {
     stats,
     updateStats,
-    markNFTMinted
+    markNFTMinted,
+    getLeaderboard
   };
 } 

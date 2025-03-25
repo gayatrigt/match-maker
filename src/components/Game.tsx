@@ -1,20 +1,10 @@
 import { useEffect, useState } from 'react';
-import {
-  Box,
-  SimpleGrid,
-  Text,
-  Button,
-  useToast,
-  Container,
-  VStack,
-  HStack,
-  Progress,
-  keyframes,
-} from '@chakra-ui/react';
 import { useGame } from '../context/GameContext';
 import { usePrivy } from '@privy-io/react-auth';
 import { usePlayerStats } from '../hooks/usePlayerStats';
 import { ALL_WORD_PAIRS } from '../data/wordPairs';
+import 'nes.css/css/nes.min.css';
+import './Game.css';
 
 interface Card {
   id: number;
@@ -25,20 +15,14 @@ interface Card {
   isIncorrect: boolean;
 }
 
-const pulseAnimation = keyframes`
-  0% { transform: scale(1); }
-  50% { transform: scale(1.05); }
-  100% { transform: scale(1); }
-`;
-
 const Game = () => {
   const { user } = usePrivy();
   const { updateStats, stats } = usePlayerStats();
-  const toast = useToast();
   const [isProcessing, setIsProcessing] = useState(false);
   const [showSaveScore, setShowSaveScore] = useState(false);
   const [correctAnswer, setCorrectAnswer] = useState<string>('');
   const [highestScore, setHighestScore] = useState(0);
+  const [showToast, setShowToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
 
   const {
     cards,
@@ -58,18 +42,32 @@ const Game = () => {
   } = useGame();
 
   const getCardColor = (card: Card) => {
-    if (card.isMatched) return 'green.100';
-    if (card.isIncorrect) return 'red.100';
-    if (card.isSelected) return 'blue.50';
-    return 'white';
+    if (card.isMatched) return '#92CC41';
+    if (card.isIncorrect) return '#E76E55';
+    if (card.isSelected) return '#209CEE';
+    return '#ffffff';
   };
 
   const getCardAnimation = (card: Card) => {
     if (card.isMatched || card.isIncorrect) {
-      return `${pulseAnimation} 0.5s ease-in-out`;
+      return 'pulse 0.5s ease-in-out';
     }
     return 'none';
   };
+
+  // Update stats when score changes
+  useEffect(() => {
+    const updatePlayerStats = async () => {
+      if (user?.wallet?.address && score > 0) {
+        const response = await updateStats(score);
+        if (response) {
+          setHighestScore(Math.max(response.score, highestScore));
+        }
+      }
+    };
+
+    updatePlayerStats();
+  }, [score, user?.wallet?.address]);
 
   // Start game
   const startGame = async () => {
@@ -87,13 +85,7 @@ const Game = () => {
       }
     } catch (error) {
       console.error('Error starting game:', error);
-      toast({
-        title: 'Error',
-        description: 'Failed to start game. Please try again.',
-        status: 'error',
-        duration: 3000,
-        isClosable: true,
-      });
+      showMessage('Failed to start game. Please try again.', 'error');
     }
   };
 
@@ -115,26 +107,14 @@ const Game = () => {
           
           if (response) {
             setHighestScore(Math.max(response.score, highestScore));
-            toast({
-              title: "Set Complete!",
-              description: `Moving to Set ${nextSetIndex + 1}`,
-              status: "success",
-              duration: 2000,
-              isClosable: true,
-            });
+            showMessage("Set Complete!", 'success');
           }
         } catch (error) {
           console.error('Error updating stats:', error);
         }
       } else {
         console.log('No wallet address found when completing set');
-        toast({
-          title: "Set Complete!",
-          description: `Moving to Set ${nextSetIndex + 1}`,
-          status: "success",
-          duration: 2000,
-          isClosable: true,
-        });
+        showMessage("Set Complete!", 'success');
       }
       
       setCurrentSet(nextSetIndex);
@@ -145,13 +125,7 @@ const Game = () => {
       }, 100);
       
     } else {
-      toast({
-        title: "Game Complete!",
-        description: "You've completed all sets!",
-        status: "success",
-        duration: 3000,
-        isClosable: true,
-      });
+      showMessage("Game Complete!", 'success');
     }
   };
 
@@ -160,30 +134,37 @@ const Game = () => {
     if (!gameStarted) return;
     if (isProcessing) return;
     if (cards[cardId].isMatched) return;
-    if (selectedCards.includes(cardId)) return;
     if (showSaveScore) return;
 
+    const clickedCard = cards[cardId];
     const updatedCards = [...cards];
-    updatedCards[cardId].isSelected = true;
-    setCards(updatedCards);
-    setSelectedCards([...selectedCards, cardId]);
 
+    // If clicking the same card, do nothing
+    if (selectedCards.includes(cardId)) return;
+
+    // If it's the first selection or switching between terms
+    if (selectedCards.length === 0 || (selectedCards.length === 1 && clickedCard.type === cards[selectedCards[0]].type)) {
+      // Clear previous selection if switching between same type (terms or definitions)
+      if (selectedCards.length === 1) {
+        updatedCards[selectedCards[0]].isSelected = false;
+        setSelectedCards([]);
+      }
+      
+      // Select the new card
+      updatedCards[cardId].isSelected = true;
+      setCards(updatedCards);
+      setSelectedCards([cardId]);
+      return;
+    }
+
+    // If it's the second selection (matching attempt)
     if (selectedCards.length === 1) {
       setIsProcessing(true);
-      const firstCard = cards[selectedCards[0]];
-      const secondCard = cards[cardId];
+      updatedCards[cardId].isSelected = true;
+      setCards(updatedCards);
 
-      if (firstCard.text === secondCard.text) {
-        setTimeout(() => {
-          const resetCards = [...updatedCards];
-          resetCards[selectedCards[0]].isSelected = false;
-          resetCards[cardId].isSelected = false;
-          setCards(resetCards);
-          setSelectedCards([]);
-          setIsProcessing(false);
-        }, 300);
-        return;
-      }
+      const firstCard = cards[selectedCards[0]];
+      const secondCard = clickedCard;
 
       const isMatch = ALL_WORD_PAIRS[currentSet].some(pair => 
         (pair.term === firstCard.text && pair.definition === secondCard.text) ||
@@ -243,178 +224,119 @@ const Game = () => {
     }
   }, [matchedPairs]);
 
+  const showMessage = (message: string, type: 'success' | 'error') => {
+    setShowToast({ message, type });
+    setTimeout(() => setShowToast(null), 3000);
+  };
+
   return (
-    <Box minH="100vh" bg="#FF8B8B">
-      <Container maxW="container.md" py={{ base: 16, md: 20 }} px={{ base: 4, md: 6 }}>
-        <VStack spacing={6}>
-          {/* Top bar */}
-          <HStack w="full" justify="space-between" color="white">
-            <VStack spacing={2} w="full" px={{ base: 2, md: 6 }}>
-              <Progress
-                value={(matchedPairs / 5) * 100}
-                size="md"
-                colorScheme="whiteAlpha"
-                bg="whiteAlpha.300"
-                borderRadius="full"
-                w="full"
-              />
-              <HStack spacing={4} justify="center" fontSize={{ base: "sm", md: "lg" }}>
-                <Text color="white" fontWeight="bold">
-                  Score: {score}
-                </Text>
-                <Text color="white" fontWeight="bold">
-                  Best: {highestScore}
-                </Text>
-                <Text color="white" fontWeight="bold">
-                  XP: {stats?.xp || 0}
-                </Text>
-              </HStack>
-            </VStack>
-          </HStack>
+    <div className="game-container">
+      <div className="game-content">
+        {/* Toast Message */}
+        {showToast && (
+          <div className={`toast-message ${showToast.type === 'success' ? 'success' : 'error'}`}>
+            {showToast.message}
+          </div>
+        )}
 
-          {/* Instructions */}
-          <Text
-            color="white"
-            fontSize={{ base: "lg", md: "2xl" }}
-            fontWeight="semibold"
-            textAlign="center"
-            mb={4}
+        {/* Top bar */}
+        <div className="nes-container is-rounded score-container">
+          <div className="progress-bar">
+            <progress 
+              className="nes-progress" 
+              value={matchedPairs * 20} 
+              max="100"
+              style={{ height: '20px' }}
+            />
+          </div>
+          <div className="score-row">
+            <span className="nes-text is-primary">Score: {score}</span>
+            <span className="nes-text is-success">Best: {highestScore}</span>
+            <span className="nes-text is-warning">XP: {stats?.xp || 0}</span>
+          </div>
+        </div>
+
+        {/* Instructions */}
+        <p className="nes-text game-instructions">
+          Match the Web3 terms with their definitions
+        </p>
+
+        {/* Game grid */}
+        <div className="game-grid">
+          {/* Terms Column */}
+          <div className="card-column">
+            {cards.filter(card => card.type === 'term').map((card) => (
+              <button
+                key={card.id}
+                className={`nes-btn card-button ${
+                  card.isMatched ? 'is-success' : 
+                  card.isIncorrect ? 'is-error' : 
+                  card.isSelected ? 'is-primary' : ''
+                }`}
+                onClick={() => handleCardClick(cards.indexOf(card))}
+                disabled={card.isMatched || !gameStarted}
+              >
+                {card.text}
+              </button>
+            ))}
+          </div>
+
+          {/* Definitions Column */}
+          <div className="card-column">
+            {cards.filter(card => card.type === 'definition').map((card) => (
+              <button
+                key={card.id}
+                className={`nes-btn card-button ${
+                  card.isMatched ? 'is-success' : 
+                  card.isIncorrect ? 'is-error' : 
+                  card.isSelected ? 'is-primary' : ''
+                }`}
+                onClick={() => handleCardClick(cards.indexOf(card))}
+                disabled={card.isMatched || !gameStarted}
+              >
+                {card.text}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Start button */}
+        {!gameStarted && (
+          <button
+            className="nes-btn is-primary start-button"
+            onClick={startGame}
           >
-            Match the Web3 terms with their definitions
-          </Text>
+            Start Game
+          </button>
+        )}
 
-          {/* Game grid */}
-          <SimpleGrid
-            columns={2}
-            spacing={{ base: 4, md: 8 }}
-            w="full"
-            px={{ base: 0, md: 2 }}
-          >
-            {/* Terms Column */}
-            <VStack spacing={{ base: 2, md: 3 }} align="stretch">
-              {cards.filter(card => card.type === 'term').map((card) => (
-                <Button
-                  key={card.id}
-                  w="full"
-                  h={{ base: "80px", md: "100px" }}
-                  bg={getCardColor(card)}
-                  color="gray.700"
-                  fontSize={{ base: "sm", md: "lg" }}
-                  fontWeight="normal"
-                  borderRadius="2xl"
-                  _hover={{ bg: getCardColor(card) }}
-                  _active={{ bg: getCardColor(card) }}
-                  boxShadow="none"
-                  onClick={() => handleCardClick(cards.indexOf(card))}
-                  disabled={card.isMatched || !gameStarted}
-                  p={{ base: 2, md: 4 }}
-                  whiteSpace="normal"
-                  textAlign="center"
-                  border="none"
-                  transition="all 0.2s"
-                  animation={getCardAnimation(card)}
-                >
-                  {card.text}
-                </Button>
-              ))}
-            </VStack>
-
-            {/* Definitions Column */}
-            <VStack spacing={{ base: 2, md: 3 }} align="stretch">
-              {cards.filter(card => card.type === 'definition').map((card) => (
-                <Button
-                  key={card.id}
-                  w="full"
-                  h={{ base: "80px", md: "100px" }}
-                  bg={getCardColor(card)}
-                  color="gray.700"
-                  fontSize={{ base: "xs", md: "md" }}
-                  fontWeight="normal"
-                  borderRadius="2xl"
-                  _hover={{ bg: getCardColor(card) }}
-                  _active={{ bg: getCardColor(card) }}
-                  boxShadow="none"
-                  onClick={() => handleCardClick(cards.indexOf(card))}
-                  disabled={card.isMatched || !gameStarted}
-                  p={{ base: 2, md: 4 }}
-                  whiteSpace="normal"
-                  textAlign="center"
-                  border="none"
-                  transition="all 0.2s"
-                  animation={getCardAnimation(card)}
-                >
-                  {card.text}
-                </Button>
-              ))}
-            </VStack>
-          </SimpleGrid>
-
-          {/* Start button */}
-          {!gameStarted && (
-            <Button
-              position="fixed"
-              bottom={8}
-              left="50%"
-              transform="translateX(-50%)"
-              bg="white"
-              color="gray.700"
-              size={{ base: "md", md: "lg" }}
-              fontSize={{ base: "lg", md: "xl" }}
-              py={{ base: 5, md: 7 }}
-              px={{ base: 8, md: 12 }}
-              borderRadius="2xl"
-              onClick={startGame}
-            >
-              Start Game
-            </Button>
-          )}
-
-          {/* Error Dialog */}
-          {showSaveScore && (
-            <Box
-              position="fixed"
-              top="50%"
-              left="50%"
-              transform="translate(-50%, -50%)"
-              bg="white"
-              p={{ base: 4, md: 6 }}
-              borderRadius="xl"
-              boxShadow="xl"
-              zIndex={10}
-              textAlign="center"
-              mx={4}
-              maxW="90vw"
-            >
-              <VStack spacing={4}>
-                <Text fontSize={{ base: "lg", md: "xl" }} fontWeight="bold" color="gray.700">
-                  Wrong Match!
-                </Text>
-                <VStack spacing={2}>
-                  <Text color="gray.600" fontSize={{ base: "sm", md: "md" }}>
-                    The correct match was:
-                  </Text>
-                  <Text color="blue.600" fontWeight="semibold" fontSize={{ base: "sm", md: "md" }}>
-                    {cards[selectedCards[0]]?.text} → {correctAnswer}
-                  </Text>
-                </VStack>
-                <Button
-                  colorScheme="blue"
+        {/* Error Dialog */}
+        {showSaveScore && (
+          <div className="modal-overlay">
+            <div className="nes-container is-rounded with-title error-dialog">
+              <p className="title">Wrong Match!</p>
+              <div className="dialog-content">
+                <p>The correct match was:</p>
+                <p className="nes-text is-primary">
+                  {cards[selectedCards[0]]?.text} → {correctAnswer}
+                </p>
+                <button
+                  className="nes-btn is-error"
                   onClick={() => {
                     setScore(0);
                     setMatchedPairs(0);
                     initializeGame(currentSet);
                     setShowSaveScore(false);
                   }}
-                  size={{ base: "sm", md: "md" }}
                 >
                   Restart Set
-                </Button>
-              </VStack>
-            </Box>
-          )}
-        </VStack>
-      </Container>
-    </Box>
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
   );
 };
 

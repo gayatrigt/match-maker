@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
-import { Text, HStack, Spinner } from '@chakra-ui/react';
 import { usePrivy } from '@privy-io/react-auth';
+import 'nes.css/css/nes.min.css';
+import './UserProfile.css';
 
 interface UserIdentity {
   ens?: string;
@@ -65,14 +66,14 @@ export const UserProfile: React.FC = () => {
     '';
 
   return (
-    <HStack spacing={4} align="center">
+    <div className="user-profile">
       {loading ? (
-        <Spinner size="sm" />
+        <div className="loading-spinner" />
       ) : (
-        <Text fontSize="sm" color="gray.600">
+        <span className="nes-text">
           {identities.farcaster || identities.ens || displayAddress}
-        </Text>
+        </span>
       )}
-    </HStack>
+    </div>
   );
 }; 

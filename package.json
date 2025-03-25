@@ -10,14 +10,11 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@chakra-ui/react": "^2.8.2",
-    "@emotion/react": "^11.11.3",
-    "@emotion/styled": "^11.11.0",
     "@privy-io/react-auth": "^1.99.1",
     "@supabase/supabase-js": "^2.49.1",
     "@types/react-router-dom": "^5.3.3",
     "ethers": "^6.11.1",
-    "framer-motion": "^10.18.0",
+    "nes.css": "^2.2.1",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-router-dom": "^6.30.0",

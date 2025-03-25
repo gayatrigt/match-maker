@@ -1,17 +1,17 @@
-import { Button } from '@chakra-ui/react';
 import { usePrivy } from '@privy-io/react-auth';
+import 'nes.css/css/nes.min.css';
+import './Auth.css';
 
 const Auth = () => {
   const { login, authenticated, logout } = usePrivy();
 
   return (
-    <Button
+    <button
       onClick={authenticated ? logout : login}
-      colorScheme={authenticated ? "red" : "blue"}
-      variant={authenticated ? "ghost" : "solid"}
+      className={`nes-btn ${authenticated ? 'is-error' : 'is-primary'}`}
     >
       {authenticated ? "Logout" : "Connect Wallet"}
-    </Button>
+    </button>
   );
 };
 
