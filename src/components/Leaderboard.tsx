@@ -6,6 +6,9 @@ import './Leaderboard.css';
 
 interface LeaderboardEntry {
   wallet_address: string;
+  email?: string;
+  ens_name?: string;
+  farcaster_username?: string;
   score: number;
   xp: number;
 }
@@ -35,6 +38,20 @@ const Leaderboard = () => {
 
   const formatAddress = (address: string) => {
     return `${address.slice(0, 4)}...${address.slice(-4)}`;
+  };
+
+  const formatEmail = (email: string) => {
+    const [username, domain] = email.split('@');
+    if (username.length <= 8) return email;
+    return `${username.slice(0, 6)}...@${domain}`;
+  };
+
+  const getDisplayName = (entry: LeaderboardEntry) => {
+    // Display priority: Farcaster > ENS > Email > Wallet Address
+    if (entry.farcaster_username) return `@${entry.farcaster_username}`;
+    if (entry.ens_name) return entry.ens_name;
+    if (entry.email) return formatEmail(entry.email);
+    return formatAddress(entry.wallet_address);
   };
 
   return (
@@ -67,7 +84,7 @@ const Leaderboard = () => {
                     <tr key={entry.wallet_address}>
                       <td className="rank-column nes-text is-primary">{index + 1}</td>
                       <td className={`player-column ${entry.wallet_address === user?.wallet?.address ? 'nes-text is-success' : ''}`}>
-                        <span className="wallet-address">{formatAddress(entry.wallet_address)}</span>
+                        <span className="wallet-address">{getDisplayName(entry)}</span>
                       </td>
                       <td className="score-column nes-text is-primary">{entry.score}</td>
                       <td className="xp-column nes-text is-warning">{entry.xp}</td>

@@ -6,6 +6,8 @@ CREATE TABLE leaderboard (
     id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
     wallet_address TEXT NOT NULL,
     email TEXT,
+    ens_name TEXT,
+    farcaster_username TEXT,
     score INTEGER NOT NULL,
     xp INTEGER DEFAULT 0 NOT NULL,
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL,

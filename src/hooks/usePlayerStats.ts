@@ -39,8 +39,35 @@ export function usePlayerStats() {
     }
 
     try {
+      // Get user's email if they logged in with email
+      const emailAccount = user.linkedAccounts?.find(account => account.type === 'email') as { email?: string } | undefined;
+      const userEmail = emailAccount?.email;
+
+      // Get Farcaster username if available
+      const farcasterAccount = user.linkedAccounts?.find(account => {
+        if (account.type === 'farcaster') {
+          const farcasterData = account as { username?: string };
+          return 'username' in farcasterData;
+        }
+        return false;
+      }) as { username?: string } | undefined;
+      const farcasterUsername = farcasterAccount?.username;
+
+      // Check for ENS in email
+      const ensAccount = user.linkedAccounts?.find(account => {
+        if (account.type === 'email') {
+          const emailData = account as { email?: string };
+          return emailData.email && emailData.email.endsWith('.eth');
+        }
+        return false;
+      }) as { email?: string } | undefined;
+      const ensName = ensAccount?.email;
+
       console.log('Starting updateStats with:', { 
         walletAddress: user.wallet.address,
+        email: userEmail,
+        farcasterUsername,
+        ensName,
         newScore,
         currentStats: stats
       });
@@ -74,6 +101,9 @@ export function usePlayerStats() {
         .upsert(
           {
             wallet_address: user.wallet.address,
+            email: userEmail,
+            ens_name: ensName,
+            farcaster_username: farcasterUsername,
             score: finalScore,
             xp: finalXP,
             updated_at: new Date().toISOString()
@@ -145,7 +175,7 @@ export function usePlayerStats() {
   const getLeaderboard = useCallback(async () => {
     const { data, error } = await supabase
       .from('leaderboard')
-      .select('wallet_address, score, xp')
+      .select('wallet_address, email, ens_name, farcaster_username, score, xp')
       .order('score', { ascending: false })
       .limit(10);
 
