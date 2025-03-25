@@ -7,7 +7,7 @@ import 'nes.css/css/nes.min.css';
 import './Game.css';
 
 const Game = () => {
-  const { user } = usePrivy();
+  const { user, authenticated, login } = usePrivy();
   const { updateStats, stats } = usePlayerStats();
   const [isProcessing, setIsProcessing] = useState(false);
   const [showSaveScore, setShowSaveScore] = useState(false);
@@ -31,6 +31,13 @@ const Game = () => {
     initializeGame,
     resetGame,
   } = useGame();
+
+  // Start game automatically when user logs in
+  useEffect(() => {
+    if (authenticated && !gameStarted) {
+      startGame();
+    }
+  }, [authenticated]);
 
   // Update stats when score changes
   useEffect(() => {
@@ -235,56 +242,58 @@ const Game = () => {
 
         {/* Instructions */}
         <p className="nes-text game-instructions">
-          Match the Web3 terms with their definitions
+          {authenticated ? "Match the Web3 terms with their definitions" : "Please login to play"}
         </p>
 
-        {/* Game grid */}
-        <div className="game-grid">
-          {/* Terms Column */}
-          <div className="card-column">
-            {cards.filter(card => card.type === 'term').map((card) => (
-              <button
-                key={card.id}
-                className={`nes-btn card-button ${
-                  card.isMatched ? 'is-success' : 
-                  card.isIncorrect ? 'is-error' : 
-                  card.isSelected ? 'is-primary' : ''
-                }`}
-                onClick={() => handleCardClick(cards.indexOf(card))}
-                disabled={card.isMatched || !gameStarted}
-              >
-                {card.text}
-              </button>
-            ))}
-          </div>
-
-          {/* Definitions Column */}
-          <div className="card-column">
-            {cards.filter(card => card.type === 'definition').map((card) => (
-              <button
-                key={card.id}
-                className={`nes-btn card-button ${
-                  card.isMatched ? 'is-success' : 
-                  card.isIncorrect ? 'is-error' : 
-                  card.isSelected ? 'is-primary' : ''
-                }`}
-                onClick={() => handleCardClick(cards.indexOf(card))}
-                disabled={card.isMatched || !gameStarted}
-              >
-                {card.text}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {/* Start button */}
-        {!gameStarted && (
+        {/* Login Button */}
+        {!authenticated && (
           <button
-            className="nes-btn is-primary start-button"
-            onClick={startGame}
+            onClick={login}
+            className="nes-btn is-primary login-button"
           >
-            Start Game
+            Login
           </button>
+        )}
+
+        {/* Game grid */}
+        {authenticated && (
+          <div className="game-grid">
+            {/* Terms Column */}
+            <div className="card-column">
+              {cards.filter(card => card.type === 'term').map((card) => (
+                <button
+                  key={card.id}
+                  className={`nes-btn card-button ${
+                    card.isMatched ? 'is-success' : 
+                    card.isIncorrect ? 'is-error' : 
+                    card.isSelected ? 'is-primary' : ''
+                  }`}
+                  onClick={() => handleCardClick(cards.indexOf(card))}
+                  disabled={card.isMatched || !gameStarted}
+                >
+                  {card.text}
+                </button>
+              ))}
+            </div>
+
+            {/* Definitions Column */}
+            <div className="card-column">
+              {cards.filter(card => card.type === 'definition').map((card) => (
+                <button
+                  key={card.id}
+                  className={`nes-btn card-button ${
+                    card.isMatched ? 'is-success' : 
+                    card.isIncorrect ? 'is-error' : 
+                    card.isSelected ? 'is-primary' : ''
+                  }`}
+                  onClick={() => handleCardClick(cards.indexOf(card))}
+                  disabled={card.isMatched || !gameStarted}
+                >
+                  {card.text}
+                </button>
+              ))}
+            </div>
+          </div>
         )}
 
         {/* Error Dialog */}

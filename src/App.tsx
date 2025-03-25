@@ -13,7 +13,7 @@ function App() {
     <PrivyProvider
       appId={import.meta.env.VITE_PRIVY_APP_ID}
       config={{
-        loginMethods: ['wallet', 'farcaster', 'email'],
+        loginMethods: ['farcaster', 'wallet', 'email'],
         defaultChain: {
           id: 8453,  // Base Mainnet
           name: 'Base',
@@ -32,7 +32,9 @@ function App() {
         appearance: {
           theme: 'light',
           accentColor: '#FF8B8B',
-        },
+          showWalletLoginFirst: false,
+          walletList: ['detected_wallets'],
+        }
       }}
     >
       <GameProvider>

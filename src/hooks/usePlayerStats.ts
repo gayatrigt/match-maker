@@ -15,15 +15,13 @@ const supabase = createClient(supabaseUrl, supabaseKey);
 interface PlayerStats {
   score: number;
   xp: number;
-  achievement_nft_minted: boolean;
 }
 
 export function usePlayerStats() {
   const { user } = usePrivy();
   const [stats, setStats] = useState<PlayerStats>({
     score: 0,
-    xp: 0,
-    achievement_nft_minted: false
+    xp: 0
   });
 
   // Calculate XP based on score (1 set = 1 XP)
@@ -116,26 +114,6 @@ export function usePlayerStats() {
     }
   }, [user?.wallet?.address, stats, calculateXP]);
 
-  // Mark NFT as minted
-  const markNFTMinted = useCallback(async () => {
-    if (!user?.wallet?.address) return;
-
-    const { error } = await supabase
-      .from('leaderboard')
-      .update({ achievement_nft_minted: true })
-      .eq('wallet_address', user.wallet.address);
-
-    if (error) {
-      console.error('Error marking NFT as minted:', error);
-      return;
-    }
-
-    setStats(prev => ({
-      ...prev,
-      achievement_nft_minted: true
-    }));
-  }, [user?.wallet?.address]);
-
   // Load initial stats
   useEffect(() => {
     const loadStats = async () => {
@@ -147,7 +125,7 @@ export function usePlayerStats() {
         .eq('wallet_address', user.wallet.address)
         .single();
 
-      if (error && error.code !== 'PGRST116') { // PGRST116 is "no rows returned"
+      if (error && error.code !== 'PGRST116') {
         console.error('Error loading stats:', error);
         return;
       }
@@ -155,8 +133,7 @@ export function usePlayerStats() {
       if (data) {
         setStats({
           score: data.score,
-          xp: data.xp,
-          achievement_nft_minted: data.achievement_nft_minted
+          xp: data.xp
         });
       }
     };
@@ -166,33 +143,23 @@ export function usePlayerStats() {
 
   // Get leaderboard data
   const getLeaderboard = useCallback(async () => {
-    try {
-      const { data, error } = await supabase
-        .from('leaderboard')
-        .select('wallet_address, score, xp')
-        .order('score', { ascending: false })
-        .limit(10);
+    const { data, error } = await supabase
+      .from('leaderboard')
+      .select('wallet_address, score, xp')
+      .order('score', { ascending: false })
+      .limit(10);
 
-      if (error) {
-        console.error('Error fetching leaderboard:', error);
-        return [];
-      }
-
-      return data.map(entry => ({
-        address: entry.wallet_address,
-        score: entry.score,
-        xp: entry.xp
-      }));
-    } catch (error) {
-      console.error('Error in getLeaderboard:', error);
-      return [];
+    if (error) {
+      console.error('Error fetching leaderboard:', error);
+      return null;
     }
+
+    return data;
   }, []);
 
   return {
     stats,
     updateStats,
-    markNFTMinted,
     getLeaderboard
   };
 } 

@@ -10,7 +10,7 @@ const Auth = () => {
       onClick={authenticated ? logout : login}
       className={`nes-btn ${authenticated ? 'is-error' : 'is-primary'}`}
     >
-      {authenticated ? "Logout" : "Connect Wallet"}
+      {authenticated ? "Logout" : "Login"}
     </button>
   );
 };

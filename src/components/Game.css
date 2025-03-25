@@ -223,6 +223,15 @@
   color: white;
 }
 
+.login-button {
+  display: block;
+  margin: 2rem auto;
+  font-size: 1.25rem !important;
+  padding: 1rem 2rem !important;
+  min-width: 160px !important;
+  font-family: 'Minecraftia', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
+}
+
 @media (max-width: 768px) {
   .game-container {
     padding: 0;
@@ -287,5 +296,11 @@
   .dialog-content button {
     font-size: 0.75rem !important;
     padding: 0.5rem 1rem !important;
+  }
+
+  .login-button {
+    font-size: 1rem !important;
+    padding: 0.75rem 1.5rem !important;
+    min-width: 120px !important;
   }
 } 

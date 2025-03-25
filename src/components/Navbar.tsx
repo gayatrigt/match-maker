@@ -13,7 +13,7 @@ const Navbar = () => {
         </div>
         
         <div className="navbar-center">
-          <Link to="/" className="nes-text is-primary">Match Maker</Link>
+          <Link to="/" className="nes-text is-primary">Match</Link>
         </div>
         
         <div className="navbar-right">

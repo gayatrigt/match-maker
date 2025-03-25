@@ -1,13 +1,12 @@
 # Web3 Memory Game
 
-A fun and educational memory game that helps players learn Web3 concepts while earning XP and NFT achievements.
+A fun and educational memory game that helps players learn Web3 concepts while earning XP.
 
 ## Features
 
 - Match Web3 terms with their definitions
 - Earn XP for completing sets
 - Track high scores on the leaderboard
-- Claim NFT achievements
 - Connect with Privy wallet integration
 - Built on Base network
 
@@ -15,7 +14,7 @@ A fun and educational memory game that helps players learn Web3 concepts while e
 
 - React + Vite
 - TypeScript
-- Chakra UI
+- NES.css for Retro UI
 - Privy for Web3 Authentication
 - Supabase for Backend
 - Base Network Integration

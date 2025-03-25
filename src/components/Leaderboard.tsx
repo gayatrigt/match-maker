@@ -5,7 +5,7 @@ import 'nes.css/css/nes.min.css';
 import './Leaderboard.css';
 
 interface LeaderboardEntry {
-  address: string;
+  wallet_address: string;
   score: number;
   xp: number;
 }
@@ -21,7 +21,7 @@ const Leaderboard = () => {
       try {
         const data = await getLeaderboard();
         if (data) {
-          setEntries(data);
+          setEntries(data as LeaderboardEntry[]);
         }
       } catch (error) {
         console.error('Error fetching leaderboard:', error);
@@ -63,10 +63,10 @@ const Leaderboard = () => {
               </thead>
               <tbody>
                 {entries.map((entry, index) => (
-                  <tr key={entry.address}>
+                  <tr key={entry.wallet_address}>
                     <td className="nes-text is-primary">{index + 1}</td>
-                    <td className={entry.address === user?.wallet?.address ? 'nes-text is-success' : ''}>
-                      {formatAddress(entry.address)}
+                    <td className={entry.wallet_address === user?.wallet?.address ? 'nes-text is-success' : ''}>
+                      {formatAddress(entry.wallet_address)}
                     </td>
                     <td className="nes-text is-primary">{entry.score}</td>
                     <td className="nes-text is-warning">{entry.xp}</td>

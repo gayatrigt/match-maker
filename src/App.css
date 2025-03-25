@@ -85,4 +85,45 @@ body::before {
   .nes-container {
     padding: 1rem;
   }
+}
+
+/* Privy Modal Styles */
+:root {
+  --privy-font-size-large: 14px !important;
+  --privy-font-size-medium: 12px !important;
+  --privy-font-size-small: 11px !important;
+}
+
+/* Target Privy dialog elements more specifically */
+[data-privy-dialog] {
+  font-size: 12px !important;
+}
+
+[data-privy-dialog] h1,
+[data-privy-dialog] h2,
+[data-privy-dialog] h3 {
+  font-size: 14px !important;
+}
+
+[data-privy-dialog] p,
+[data-privy-dialog] span,
+[data-privy-dialog] div {
+  font-size: 12px !important;
+}
+
+[data-privy-dialog] button {
+  font-size: 12px !important;
+}
+
+/* Target specific Privy components */
+.privy-login-dialog-content {
+  font-size: 12px !important;
+}
+
+.privy-login-dialog-content button {
+  font-size: 12px !important;
+}
+
+.wallet-option-button {
+  font-size: 12px !important;
 } 
