@@ -24,19 +24,40 @@
   text-shadow: 1px 1px 0 #fff;
 }
 
+.table-responsive {
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  margin-bottom: 1rem;
+  display: block;
+}
+
 .nes-table {
   background-color: rgba(255, 255, 255, 0.95) !important;
   backdrop-filter: blur(5px);
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  table-layout: fixed;
+}
+
+.nes-table th,
+.nes-table td {
+  border: 2px solid #000;
+  padding: 0.75rem;
+  text-align: center;
+  vertical-align: middle;
 }
 
 .nes-table th {
   background-color: rgba(32, 156, 238, 0.9) !important;
   color: white;
   text-shadow: 1px 1px 0 rgba(0, 0, 0, 0.5);
+  white-space: nowrap;
 }
 
 .rank-column {
-  width: 60px;
+  width: 50px;
 }
 
 .player-column {
@@ -45,7 +66,15 @@
 
 .score-column,
 .xp-column {
-  width: 30%;
+  width: 15%;
+}
+
+.wallet-address {
+  display: inline-block;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .loading-container,
@@ -59,6 +88,15 @@
 @media (max-width: 768px) {
   .leaderboard-container {
     padding: 0.5rem;
+    min-height: calc(100vh - 50px);
+  }
+
+  .leaderboard-content {
+    width: 95%;
+  }
+
+  .leaderboard-content .nes-container {
+    padding: 0.5rem !important;
   }
 
   .leaderboard-title {
@@ -66,14 +104,34 @@
     margin-bottom: 0.5rem;
   }
 
+  .table-responsive {
+    margin: 0;
+    padding: 0;
+    width: 100%;
+  }
+
+  .nes-table {
+    font-size: 0.75rem;
+    min-width: 100%;
+  }
+
   .nes-table th,
   .nes-table td {
-    padding: 0.25rem;
-    font-size: 0.75rem;
+    padding: 0.5rem;
+    border-width: 2px;
   }
 
   .rank-column {
-    width: 40px;
+    width: 30px;
+  }
+
+  .player-column {
+    width: 35%;
+  }
+
+  .score-column,
+  .xp-column {
+    width: 17.5%;
   }
 
   .loading-container,

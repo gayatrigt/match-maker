@@ -34,7 +34,7 @@ const Leaderboard = () => {
   }, [getLeaderboard]);
 
   const formatAddress = (address: string) => {
-    return `${address.slice(0, 6)}...${address.slice(-4)}`;
+    return `${address.slice(0, 4)}...${address.slice(-4)}`;
   };
 
   return (
@@ -52,28 +52,30 @@ const Leaderboard = () => {
               <span className="nes-text">No entries yet</span>
             </div>
           ) : (
-            <table className="nes-table is-bordered is-centered">
-              <thead>
-                <tr>
-                  <th className="rank-column">Rank</th>
-                  <th className="player-column">Player</th>
-                  <th className="score-column">Score</th>
-                  <th className="xp-column">XP</th>
-                </tr>
-              </thead>
-              <tbody>
-                {entries.map((entry, index) => (
-                  <tr key={entry.wallet_address}>
-                    <td className="nes-text is-primary">{index + 1}</td>
-                    <td className={entry.wallet_address === user?.wallet?.address ? 'nes-text is-success' : ''}>
-                      {formatAddress(entry.wallet_address)}
-                    </td>
-                    <td className="nes-text is-primary">{entry.score}</td>
-                    <td className="nes-text is-warning">{entry.xp}</td>
+            <div className="table-responsive">
+              <table className="nes-table is-bordered is-centered">
+                <thead>
+                  <tr>
+                    <th className="rank-column">#</th>
+                    <th className="player-column">Player</th>
+                    <th className="score-column">Score</th>
+                    <th className="xp-column">XP</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {entries.map((entry, index) => (
+                    <tr key={entry.wallet_address}>
+                      <td className="rank-column nes-text is-primary">{index + 1}</td>
+                      <td className={`player-column ${entry.wallet_address === user?.wallet?.address ? 'nes-text is-success' : ''}`}>
+                        <span className="wallet-address">{formatAddress(entry.wallet_address)}</span>
+                      </td>
+                      <td className="score-column nes-text is-primary">{entry.score}</td>
+                      <td className="xp-column nes-text is-warning">{entry.xp}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           )}
         </div>
       </div>

@@ -1,8 +1,9 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useGame } from '../context/GameContext';
 import { usePrivy } from '@privy-io/react-auth';
 import { usePlayerStats } from '../hooks/usePlayerStats';
 import { ALL_WORD_PAIRS } from '../data/wordPairs';
+import { TIPS } from '../data/tips';
 import 'nes.css/css/nes.min.css';
 import './Game.css';
 
@@ -14,6 +15,9 @@ const Game = () => {
   const [correctAnswer, setCorrectAnswer] = useState<string>('');
   const [highestScore, setHighestScore] = useState(0);
   const [showToast, setShowToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
+  const [showTip, setShowTip] = useState(false);
+  const [currentTip, setCurrentTip] = useState('');
+  const [isShaking, setIsShaking] = useState(false);
 
   const {
     cards,
@@ -53,6 +57,11 @@ const Game = () => {
     updatePlayerStats();
   }, [score, user?.wallet?.address]);
 
+  const getRandomTip = useCallback(() => {
+    const randomIndex = Math.floor(Math.random() * TIPS.length);
+    return TIPS[randomIndex];
+  }, []);
+
   // Start game
   const startGame = async () => {
     try {
@@ -73,7 +82,7 @@ const Game = () => {
     }
   };
 
-  // Move to next set
+  // Move to next set with tip
   const moveToNextSet = async () => {
     const nextSetIndex = currentSet + 1;
     console.log('Attempting to move to next set:', nextSetIndex, 'Total sets:', ALL_WORD_PAIRS.length);
@@ -81,8 +90,6 @@ const Game = () => {
     if (nextSetIndex < ALL_WORD_PAIRS.length) {
       // Calculate the total score after completing this set
       const newScore = score;
-      
-      console.log('Moving to next set. Current set:', currentSet, 'Next set:', nextSetIndex, 'Score:', newScore);
       
       if (user?.wallet?.address) {
         console.log('Updating stats');
@@ -101,41 +108,37 @@ const Game = () => {
         showMessage("Set Complete!", 'success');
       }
       
-      setCurrentSet(nextSetIndex);
-      setTimeout(() => {
-        console.log('Initializing game for set:', nextSetIndex);
-        setMatchedPairs(0);
-        initializeGame(nextSetIndex);
-      }, 100);
+      // Show tip before next set
+      setCurrentTip(getRandomTip());
+      setShowTip(true);
       
+      // The next set will be initialized after the user clicks continue in the tip modal
+      setCurrentSet(nextSetIndex);
     } else {
       showMessage("Game Complete!", 'success');
     }
   };
 
-  // Handle card click
+  const handleContinueAfterTip = () => {
+    setShowTip(false);
+    setMatchedPairs(0);
+    initializeGame(currentSet);
+  };
+
+  const triggerScreenShake = () => {
+    setIsShaking(true);
+    setTimeout(() => setIsShaking(false), 500);
+  };
+
   const handleCardClick = (cardId: number) => {
-    if (!gameStarted) return;
-    if (isProcessing) return;
-    if (cards[cardId].isMatched) return;
-    if (showSaveScore) return;
+    if (isProcessing || cards[cardId].isMatched) return;
 
-    const clickedCard = cards[cardId];
     const updatedCards = [...cards];
+    const clickedCard = updatedCards[cardId];
 
-    // If clicking the same card, do nothing
-    if (selectedCards.includes(cardId)) return;
-
-    // If it's the first selection or switching between terms
-    if (selectedCards.length === 0 || (selectedCards.length === 1 && clickedCard.type === cards[selectedCards[0]].type)) {
-      // Clear previous selection if switching between same type
-      if (selectedCards.length === 1) {
-        updatedCards[selectedCards[0]].isSelected = false;
-        setSelectedCards([]);
-      }
-      
-      // Select the new card
-      updatedCards[cardId].isSelected = true;
+    // If it's the first selection
+    if (selectedCards.length === 0) {
+      clickedCard.isSelected = true;
       setCards(updatedCards);
       setSelectedCards([cardId]);
       return;
@@ -177,6 +180,9 @@ const Game = () => {
         setShowSaveScore(false);
         setCorrectAnswer('');
         
+        // Trigger screen shake for wrong answer
+        triggerScreenShake();
+        
         setTimeout(() => {
           setCorrectAnswer(correct || '');
           updatedCards[selectedCards[0]].isIncorrect = true;
@@ -214,7 +220,7 @@ const Game = () => {
   };
 
   return (
-    <div className="game-container">
+    <div className={`game-container ${isShaking ? 'shake' : ''}`}>
       <div className="game-content">
         {/* Toast Message */}
         {showToast && (
@@ -317,6 +323,27 @@ const Game = () => {
                 >
                   Restart Set
                 </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Tip Modal */}
+        {showTip && (
+          <div className="modal-overlay">
+            <div className="tip-modal">
+              <div className="nes-container is-rounded">
+                <h3 className="title">Web3 Tip!</h3>
+                <p className="tip-content">{currentTip}</p>
+                <button
+                  className="nes-btn is-primary continue-button"
+                  onClick={handleContinueAfterTip}
+                >
+                  Continue to Next Set
+                </button>
+                <p className="progress-text">
+                  Set {currentSet + 1} of {ALL_WORD_PAIRS.length}
+                </p>
               </div>
             </div>
           </div>

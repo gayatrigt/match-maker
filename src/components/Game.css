@@ -232,6 +232,57 @@
   font-family: 'Minecraftia', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
 }
 
+/* Screen shake animation */
+@keyframes shake-screen {
+  0%, 100% { transform: translateX(0); }
+  10%, 30%, 50%, 70%, 90% { transform: translateX(-5px); }
+  20%, 40%, 60%, 80% { transform: translateX(5px); }
+}
+
+.shake {
+  animation: shake-screen 0.5s cubic-bezier(.36,.07,.19,.97) both;
+}
+
+/* Tip Modal */
+.tip-modal {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 90%;
+  max-width: 500px;
+  z-index: 1000;
+  text-align: center;
+}
+
+.tip-modal .nes-container {
+  background-color: rgba(255, 255, 255, 0.95) !important;
+  backdrop-filter: blur(10px);
+  padding: 1.5rem !important;
+}
+
+.tip-modal .title {
+  font-size: 1.25rem;
+  margin-bottom: 1rem;
+  color: #209CEE;
+}
+
+.tip-modal .tip-content {
+  font-size: 1rem;
+  margin: 1.5rem 0;
+  line-height: 1.5;
+}
+
+.tip-modal .continue-button {
+  margin-top: 1rem;
+}
+
+.tip-modal .progress-text {
+  margin-top: 1rem;
+  font-size: 0.875rem;
+  color: #666;
+}
+
 @media (max-width: 768px) {
   .game-container {
     padding: 0;
@@ -302,5 +353,31 @@
     font-size: 1rem !important;
     padding: 0.75rem 1.5rem !important;
     min-width: 120px !important;
+  }
+
+  .tip-modal {
+    width: 95%;
+  }
+
+  .tip-modal .nes-container {
+    padding: 1rem !important;
+  }
+
+  .tip-modal .title {
+    font-size: 1rem;
+  }
+
+  .tip-modal .tip-content {
+    font-size: 0.875rem;
+    margin: 1rem 0;
+  }
+
+  .tip-modal .continue-button {
+    font-size: 0.875rem !important;
+    padding: 0.5rem 1rem !important;
+  }
+
+  .tip-modal .progress-text {
+    font-size: 0.75rem;
   }
 } 
