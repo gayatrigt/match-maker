@@ -21,7 +21,6 @@ const Game = () => {
   const [currentTip, setCurrentTip] = useState('');
   const [isShaking, setIsShaking] = useState(false);
   const [timeLeft, setTimeLeft] = useState(TIMER_DURATION);
-  const [showStartDialog, setShowStartDialog] = useState(false);
   const [showGameStart, setShowGameStart] = useState(false);
 
   const {
