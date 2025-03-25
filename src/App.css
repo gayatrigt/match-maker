@@ -8,6 +8,7 @@ html, body {
   -webkit-font-smoothing: none;
   -moz-osx-font-smoothing: grayscale;
   overflow-x: hidden;
+  font-size: 16px;
 }
 
 body {
@@ -71,9 +72,50 @@ body::before {
   100% { transform: scale(1); }
 }
 
+/* Privy Modal Styles */
+[data-privy-dialog] {
+  font-family: 'Minecraftia', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
+}
+
+[data-privy-dialog] * {
+  font-family: inherit !important;
+}
+
+[data-privy-dialog] [role="dialog"] {
+  padding: 1rem !important;
+}
+
+[data-privy-dialog] h1,
+[data-privy-dialog] h2,
+[data-privy-dialog] h3 {
+  font-size: 0.875rem !important;
+  line-height: 1.4 !important;
+  margin-bottom: 1rem !important;
+}
+
+[data-privy-dialog] p,
+[data-privy-dialog] span,
+[data-privy-dialog] div,
+[data-privy-dialog] input,
+[data-privy-dialog] button {
+  font-size: 0.75rem !important;
+  line-height: 1.4 !important;
+}
+
+[data-privy-dialog] button {
+  padding: 0.5rem 0.75rem !important;
+  height: auto !important;
+  min-height: 0 !important;
+}
+
+[data-privy-dialog] .wallet-option-button {
+  margin-bottom: 0.5rem !important;
+  padding: 0.75rem !important;
+}
+
 /* Mobile adjustments */
 @media (max-width: 768px) {
-  body {
+  html, body {
     font-size: 14px;
   }
 
@@ -85,45 +127,22 @@ body::before {
   .nes-container {
     padding: 1rem;
   }
-}
 
-/* Privy Modal Styles */
-:root {
-  --privy-font-size-large: 14px !important;
-  --privy-font-size-medium: 12px !important;
-  --privy-font-size-small: 11px !important;
-}
+  [data-privy-dialog] h1,
+  [data-privy-dialog] h2,
+  [data-privy-dialog] h3 {
+    font-size: 0.75rem !important;
+  }
 
-/* Target Privy dialog elements more specifically */
-[data-privy-dialog] {
-  font-size: 12px !important;
-}
+  [data-privy-dialog] p,
+  [data-privy-dialog] span,
+  [data-privy-dialog] div,
+  [data-privy-dialog] input,
+  [data-privy-dialog] button {
+    font-size: 0.675rem !important;
+  }
 
-[data-privy-dialog] h1,
-[data-privy-dialog] h2,
-[data-privy-dialog] h3 {
-  font-size: 14px !important;
-}
-
-[data-privy-dialog] p,
-[data-privy-dialog] span,
-[data-privy-dialog] div {
-  font-size: 12px !important;
-}
-
-[data-privy-dialog] button {
-  font-size: 12px !important;
-}
-
-/* Target specific Privy components */
-.privy-login-dialog-content {
-  font-size: 12px !important;
-}
-
-.privy-login-dialog-content button {
-  font-size: 12px !important;
-}
-
-.wallet-option-button {
-  font-size: 12px !important;
+  [data-privy-dialog] button {
+    padding: 0.5rem !important;
+  }
 } 
