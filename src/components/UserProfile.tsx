@@ -4,11 +4,6 @@ import { useEnsName } from 'wagmi';
 import 'nes.css/css/nes.min.css';
 import './UserProfile.css';
 
-interface UserIdentity {
-  ens?: string;
-  farcaster?: string;
-}
-
 export const UserProfile: React.FC = () => {
   const { user, authenticated } = usePrivy();
   const [loading, setLoading] = useState(true);
