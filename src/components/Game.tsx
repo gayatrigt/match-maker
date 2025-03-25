@@ -7,6 +7,8 @@ import { TIPS } from '../data/tips';
 import 'nes.css/css/nes.min.css';
 import './Game.css';
 
+const TIMER_DURATION = 60; // 60 seconds per set
+
 const Game = () => {
   const { user, authenticated, login } = usePrivy();
   const { updateStats, stats } = usePlayerStats();
@@ -18,6 +20,9 @@ const Game = () => {
   const [showTip, setShowTip] = useState(false);
   const [currentTip, setCurrentTip] = useState('');
   const [isShaking, setIsShaking] = useState(false);
+  const [timeLeft, setTimeLeft] = useState(TIMER_DURATION);
+  const [showStartDialog, setShowStartDialog] = useState(false);
+  const [showGameStart, setShowGameStart] = useState(false);
 
   const {
     cards,
@@ -57,29 +62,38 @@ const Game = () => {
     updatePlayerStats();
   }, [score, user?.wallet?.address]);
 
+  // Timer effect - only run when gameStarted is true
+  useEffect(() => {
+    let timer: NodeJS.Timeout;
+    
+    if (gameStarted && timeLeft > 0) {
+      timer = setInterval(() => {
+        setTimeLeft(prev => {
+          if (prev <= 1) {
+            handleTimeUp();
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+    }
+
+    return () => {
+      if (timer) clearInterval(timer);
+    };
+  }, [gameStarted, timeLeft]);
+
   const getRandomTip = useCallback(() => {
     const randomIndex = Math.floor(Math.random() * TIPS.length);
     return TIPS[randomIndex];
   }, []);
 
-  // Start game
-  const startGame = async () => {
-    try {
-      resetGame();
-      initializeGame(0);
-      setGameStarted(true);
-      
-      // Load initial stats
-      if (user?.wallet?.address) {
-        const response = await updateStats(0);
-        if (response) {
-          setHighestScore(response.score);
-        }
-      }
-    } catch (error) {
-      console.error('Error starting game:', error);
-      showMessage('Failed to start game. Please try again.', 'error');
-    }
+  const handleTimeUp = () => {
+    showMessage("Time's up!", 'error');
+    setMatchedPairs(0);
+    setGameStarted(false); // Stop the timer
+    initializeGame(currentSet);
+    setTimeLeft(TIMER_DURATION);
   };
 
   // Move to next set with tip
@@ -108,21 +122,47 @@ const Game = () => {
         showMessage("Set Complete!", 'success');
       }
       
-      // Show tip before next set
+      setGameStarted(false); // Stop the timer
       setCurrentTip(getRandomTip());
       setShowTip(true);
-      
-      // The next set will be initialized after the user clicks continue in the tip modal
       setCurrentSet(nextSetIndex);
     } else {
       showMessage("Game Complete!", 'success');
     }
   };
 
+  // Start game
+  const startGame = async () => {
+    try {
+      resetGame();
+      initializeGame(0);
+      setShowGameStart(true);
+      
+      // Load initial stats
+      if (user?.wallet?.address) {
+        const response = await updateStats(0);
+        if (response) {
+          setHighestScore(response.score);
+        }
+      }
+    } catch (error) {
+      console.error('Error starting game:', error);
+      showMessage('Failed to start game. Please try again.', 'error');
+    }
+  };
+
+  const handleGameStart = () => {
+    setShowGameStart(false);
+    setGameStarted(true);
+    setTimeLeft(TIMER_DURATION);
+  };
+
   const handleContinueAfterTip = () => {
     setShowTip(false);
     setMatchedPairs(0);
     initializeGame(currentSet);
+    setGameStarted(true); // Start the game when user clicks continue
+    setTimeLeft(TIMER_DURATION);
   };
 
   const triggerScreenShake = () => {
@@ -130,13 +170,14 @@ const Game = () => {
     setTimeout(() => setIsShaking(false), 500);
   };
 
+  // Handle card click with speed bonus
   const handleCardClick = (cardId: number) => {
     if (isProcessing || cards[cardId].isMatched) return;
 
     const updatedCards = [...cards];
     const clickedCard = updatedCards[cardId];
 
-    // If it's the first selection
+    // If it's the first selection, start the timer
     if (selectedCards.length === 0) {
       clickedCard.isSelected = true;
       setCards(updatedCards);
@@ -150,7 +191,6 @@ const Game = () => {
       
       // Prevent matching two terms or two definitions
       if (firstCard.type === clickedCard.type) {
-        // Deselect the first card if same type is clicked
         updatedCards[selectedCards[0]].isSelected = false;
         setCards(updatedCards);
         setSelectedCards([cardId]);
@@ -230,6 +270,29 @@ const Game = () => {
     setTimeout(() => setShowToast(null), 3000);
   };
 
+  // Error dialog restart set handler
+  const handleRestartSet = () => {
+    setScore(0);
+    setMatchedPairs(0);
+    setTimeLeft(TIMER_DURATION);
+    initializeGame(currentSet);
+    setShowSaveScore(false);
+  };
+
+  if (!authenticated) {
+    return (
+      <div className="welcome-container">
+        <div className="nes-container is-rounded welcome-box">
+          <h1>Welcome to Match Maker!</h1>
+          <p>Level up your Web3 knowledge through this memory game.</p>
+          <button className="nes-btn is-primary" onClick={login}>
+            Connect to Start Playing
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className={`game-container ${isShaking ? 'shake' : ''}`}>
       <div className="game-content">
@@ -240,8 +303,35 @@ const Game = () => {
           </div>
         )}
 
+        {/* Game Start Screen */}
+        {showGameStart && (
+          <div className="modal-overlay">
+            <div className="nes-container is-rounded game-start-dialog">
+              <h2>Welcome to Match Maker!</h2>
+              <div className="game-rules">
+                <p>🎮 How to Play:</p>
+                <ul>
+                  <li>Match Web3 terms with their definitions</li>
+                  <li>Complete each set within 60 seconds</li>
+                  <li>Learn as you play and climb the leaderboard</li>
+                </ul>
+              </div>
+              <p className="set-info">Ready to start Set 1?</p>
+              <button className="nes-btn is-primary" onClick={handleGameStart}>
+                Let's Begin!
+              </button>
+            </div>
+          </div>
+        )}
+
         {/* Top bar */}
         <div className="nes-container is-rounded score-container">
+          <div className="score-row">
+            <span className="nes-text is-primary">Score: {score}</span>
+            <span className="nes-text is-error">Time: {timeLeft}s</span>
+            <span className="nes-text is-success">Best: {highestScore}</span>
+            <span className="nes-text is-warning">XP: {stats?.xp || 0}</span>
+          </div>
           <div className="progress-bar">
             <progress 
               className="nes-progress" 
@@ -249,11 +339,6 @@ const Game = () => {
               max="100"
               style={{ height: '20px' }}
             />
-          </div>
-          <div className="score-row">
-            <span className="nes-text is-primary">Score: {score}</span>
-            <span className="nes-text is-success">Best: {highestScore}</span>
-            <span className="nes-text is-warning">XP: {stats?.xp || 0}</span>
           </div>
         </div>
 
@@ -325,12 +410,7 @@ const Game = () => {
                 </p>
                 <button
                   className="nes-btn is-error"
-                  onClick={() => {
-                    setScore(0);
-                    setMatchedPairs(0);
-                    initializeGame(currentSet);
-                    setShowSaveScore(false);
-                  }}
+                  onClick={handleRestartSet}
                 >
                   Restart Set
                 </button>
@@ -346,11 +426,14 @@ const Game = () => {
               <div className="nes-container is-rounded">
                 <h3 className="title">Web3 Tip!</h3>
                 <p className="tip-content">{currentTip}</p>
+                <p className="progress-text">
+                  Set {currentSet} Complete! Ready for Set {currentSet + 1}?
+                </p>
                 <button
                   className="nes-btn is-primary continue-button"
                   onClick={handleContinueAfterTip}
                 >
-                  Continue to Next Set
+                  Start Next Set
                 </button>
                 <p className="progress-text">
                   Set {currentSet + 1} of {ALL_WORD_PAIRS.length}
