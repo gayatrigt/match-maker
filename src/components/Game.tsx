@@ -33,7 +33,7 @@ const pulseAnimation = keyframes`
 
 const Game = () => {
   const { user } = usePrivy();
-  const { stats, updateStats } = usePlayerStats();
+  const { updateStats } = usePlayerStats();
   const toast = useToast();
   const [isProcessing, setIsProcessing] = useState(false);
   const [showSaveScore, setShowSaveScore] = useState(false);
