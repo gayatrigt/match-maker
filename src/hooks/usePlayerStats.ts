@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { createClient } from '@supabase/supabase-js';
 import { usePrivy } from '@privy-io/react-auth';
+import { useEnsName } from 'wagmi';
 
 // Initialize Supabase client
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
@@ -19,6 +20,10 @@ interface PlayerStats {
 
 export function usePlayerStats() {
   const { user } = usePrivy();
+  const { data: ensName } = useEnsName({ 
+    address: user?.wallet?.address as `0x${string}` | undefined,
+    chainId: 1 // Mainnet
+  });
   const [stats, setStats] = useState<PlayerStats>({
     score: 0,
     xp: 0
@@ -52,16 +57,6 @@ export function usePlayerStats() {
         return false;
       }) as { username?: string } | undefined;
       const farcasterUsername = farcasterAccount?.username;
-
-      // Check for ENS in email
-      const ensAccount = user.linkedAccounts?.find(account => {
-        if (account.type === 'email') {
-          const emailData = account as { email?: string };
-          return emailData.email && emailData.email.endsWith('.eth');
-        }
-        return false;
-      }) as { email?: string } | undefined;
-      const ensName = ensAccount?.email;
 
       console.log('Starting updateStats with:', { 
         walletAddress: user.wallet.address,
