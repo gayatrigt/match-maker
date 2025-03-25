@@ -1,7 +1,7 @@
-import React, { createContext, useContext, useState, useCallback } from 'react';
+import React, { createContext, useContext, useState } from 'react';
 import { ALL_WORD_PAIRS } from '../data/wordPairs';
 
-interface Card {
+export interface Card {
   id: number;
   text: string;
   type: 'term' | 'definition';
@@ -23,9 +23,7 @@ interface GameContextType {
   setCurrentSet: React.Dispatch<React.SetStateAction<number>>;
   score: number;
   setScore: React.Dispatch<React.SetStateAction<number>>;
-  totalAttempts: number;
-  setTotalAttempts: React.Dispatch<React.SetStateAction<number>>;
-  initializeGame: (setIndex?: number) => void;
+  initializeGame: (setIndex: number) => void;
   resetGame: () => void;
 }
 
@@ -39,70 +37,77 @@ export const useGame = () => {
   return context;
 };
 
-const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [cards, setCards] = useState<Card[]>([]);
   const [gameStarted, setGameStarted] = useState(false);
   const [selectedCards, setSelectedCards] = useState<number[]>([]);
   const [matchedPairs, setMatchedPairs] = useState(0);
   const [currentSet, setCurrentSet] = useState(0);
   const [score, setScore] = useState(0);
-  const [totalAttempts, setTotalAttempts] = useState(0);
 
-  const initializeGame = useCallback((setIndex: number = 0) => {
-    const currentWordPairs = ALL_WORD_PAIRS[setIndex];
-    const terms: Card[] = currentWordPairs.map((pair, index) => ({
-      id: index * 2,
-      text: pair.term,
-      type: 'term',
-      isMatched: false,
-      isSelected: false,
-      isIncorrect: false,
-    }));
+  const initializeGame = (setIndex: number) => {
+    const currentPairs = ALL_WORD_PAIRS[setIndex];
+    if (!currentPairs) return;
 
-    const definitions: Card[] = currentWordPairs.map((pair, index) => ({
-      id: index * 2 + 1,
-      text: pair.definition,
-      type: 'definition',
-      isMatched: false,
-      isSelected: false,
-      isIncorrect: false,
-    }));
+    const newCards: Card[] = [
+      ...currentPairs.map((pair, index) => ({
+        id: index,
+        text: pair.term,
+        type: 'term' as const,
+        isMatched: false,
+        isSelected: false,
+        isIncorrect: false,
+      })),
+      ...currentPairs.map((pair, index) => ({
+        id: index + currentPairs.length,
+        text: pair.definition,
+        type: 'definition' as const,
+        isMatched: false,
+        isSelected: false,
+        isIncorrect: false,
+      })),
+    ];
 
-    const shuffledDefinitions = definitions.sort(() => Math.random() - 0.5);
-    setCards([...terms, ...shuffledDefinitions]);
+    // Shuffle the cards
+    for (let i = newCards.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [newCards[i], newCards[j]] = [newCards[j], newCards[i]];
+    }
+
+    setCards(newCards);
     setSelectedCards([]);
-  }, []);
-
-  const resetGame = useCallback(() => {
-    setCurrentSet(0);
-    setScore(0);
-    setTotalAttempts(0);
     setMatchedPairs(0);
+  };
+
+  const resetGame = () => {
     setGameStarted(false);
     setCards([]);
     setSelectedCards([]);
-  }, []);
-
-  const value = {
-    cards,
-    setCards,
-    gameStarted,
-    setGameStarted,
-    selectedCards,
-    setSelectedCards,
-    matchedPairs,
-    setMatchedPairs,
-    currentSet,
-    setCurrentSet,
-    score,
-    setScore,
-    totalAttempts,
-    setTotalAttempts,
-    initializeGame,
-    resetGame,
+    setMatchedPairs(0);
+    setCurrentSet(0);
+    setScore(0);
   };
 
-  return <GameContext.Provider value={value}>{children}</GameContext.Provider>;
-};
-
-export { GameProvider }; 
+  return (
+    <GameContext.Provider
+      value={{
+        cards,
+        setCards,
+        gameStarted,
+        setGameStarted,
+        selectedCards,
+        setSelectedCards,
+        matchedPairs,
+        setMatchedPairs,
+        currentSet,
+        setCurrentSet,
+        score,
+        setScore,
+        initializeGame,
+        resetGame,
+      }}
+    >
+      {children}
+    </GameContext.Provider>
+  );
+}; 

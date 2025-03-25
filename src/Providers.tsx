@@ -1,14 +1,24 @@
-import React from 'react'
-import { ChakraProvider } from '@chakra-ui/react'
+import { PrivyProvider } from '@privy-io/react-auth';
+import { GameProvider } from './context/GameContext';
 
-interface ProvidersProps {
-  children: React.ReactNode
-}
-
-export function Providers({ children }: ProvidersProps) {
+const Providers = ({ children }: { children: React.ReactNode }) => {
   return (
-    <ChakraProvider>
-      {children}
-    </ChakraProvider>
-  )
-} 
+    <PrivyProvider
+      appId={import.meta.env.VITE_PRIVY_APP_ID}
+      config={{
+        loginMethods: ['wallet', 'email'],
+        appearance: {
+          theme: 'light',
+          accentColor: '#676767',
+          showWalletLoginFirst: true,
+        },
+      }}
+    >
+      <GameProvider>
+        {children}
+      </GameProvider>
+    </PrivyProvider>
+  );
+};
+
+export default Providers; 

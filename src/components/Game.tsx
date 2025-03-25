@@ -6,15 +6,6 @@ import { ALL_WORD_PAIRS } from '../data/wordPairs';
 import 'nes.css/css/nes.min.css';
 import './Game.css';
 
-interface Card {
-  id: number;
-  text: string;
-  type: 'term' | 'definition';
-  isMatched: boolean;
-  isSelected: boolean;
-  isIncorrect: boolean;
-}
-
 const Game = () => {
   const { user } = usePrivy();
   const { updateStats, stats } = usePlayerStats();
@@ -40,20 +31,6 @@ const Game = () => {
     initializeGame,
     resetGame,
   } = useGame();
-
-  const getCardColor = (card: Card) => {
-    if (card.isMatched) return '#92CC41';
-    if (card.isIncorrect) return '#E76E55';
-    if (card.isSelected) return '#209CEE';
-    return '#ffffff';
-  };
-
-  const getCardAnimation = (card: Card) => {
-    if (card.isMatched || card.isIncorrect) {
-      return 'pulse 0.5s ease-in-out';
-    }
-    return 'none';
-  };
 
   // Update stats when score changes
   useEffect(() => {
@@ -144,7 +121,7 @@ const Game = () => {
 
     // If it's the first selection or switching between terms
     if (selectedCards.length === 0 || (selectedCards.length === 1 && clickedCard.type === cards[selectedCards[0]].type)) {
-      // Clear previous selection if switching between same type (terms or definitions)
+      // Clear previous selection if switching between same type
       if (selectedCards.length === 1) {
         updatedCards[selectedCards[0]].isSelected = false;
         setSelectedCards([]);
