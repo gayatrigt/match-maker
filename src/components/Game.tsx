@@ -146,11 +146,22 @@ const Game = () => {
 
     // If it's the second selection (matching attempt)
     if (selectedCards.length === 1) {
+      const firstCard = cards[selectedCards[0]];
+      
+      // Prevent matching two terms or two definitions
+      if (firstCard.type === clickedCard.type) {
+        // Deselect the first card if same type is clicked
+        updatedCards[selectedCards[0]].isSelected = false;
+        setCards(updatedCards);
+        setSelectedCards([cardId]);
+        clickedCard.isSelected = true;
+        return;
+      }
+
       setIsProcessing(true);
       updatedCards[cardId].isSelected = true;
       setCards(updatedCards);
 
-      const firstCard = cards[selectedCards[0]];
       const secondCard = clickedCard;
 
       const isMatch = ALL_WORD_PAIRS[currentSet].some(pair => 

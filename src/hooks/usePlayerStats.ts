@@ -38,8 +38,10 @@ export function usePlayerStats() {
 
   // Update player stats
   const updateStats = useCallback(async (newScore: number) => {
+    console.log('🎯 updateStats called with newScore:', newScore);
+    
     if (!user?.wallet?.address) {
-      console.log('No wallet address found');
+      console.log('❌ No wallet address found');
       return;
     }
 
@@ -58,7 +60,7 @@ export function usePlayerStats() {
       }) as { username?: string } | undefined;
       const farcasterUsername = farcasterAccount?.username;
 
-      console.log('Starting updateStats with:', { 
+      console.log('👤 User details:', { 
         walletAddress: user.wallet.address,
         email: userEmail,
         farcasterUsername,
@@ -74,8 +76,10 @@ export function usePlayerStats() {
         .eq('wallet_address', user.wallet.address)
         .single();
 
+      console.log('📊 Current stats from DB:', currentStats, 'Error:', fetchError);
+
       if (fetchError && fetchError.code !== 'PGRST116') {
-        console.log('Error fetching current stats:', fetchError.message, fetchError.details);
+        console.log('❌ Error fetching current stats:', fetchError.message, fetchError.details);
         return;
       }
 
@@ -83,7 +87,7 @@ export function usePlayerStats() {
       const finalScore = Math.max(currentStats?.score || 0, newScore);
       const finalXP = calculateXP(finalScore);
 
-      console.log('Calculated final values:', { 
+      console.log('🎮 Calculated values:', { 
         finalScore, 
         finalXP,
         currentScore: currentStats?.score || 0,
@@ -112,11 +116,11 @@ export function usePlayerStats() {
         .single();
 
       if (upsertError) {
-        console.error('Error upserting stats:', upsertError.message, upsertError.details);
+        console.error('❌ Error upserting stats:', upsertError.message, upsertError.details);
         return;
       }
 
-      console.log('Upsert successful. Response:', upsertResponse);
+      console.log('✅ Upsert successful. Response:', upsertResponse);
 
       // Update local state with the new values
       setStats(prev => {
@@ -125,7 +129,7 @@ export function usePlayerStats() {
           score: finalScore,
           xp: finalXP
         };
-        console.log('Updating local stats:', { prev, new: newStats });
+        console.log('🔄 Updating local stats:', { prev, new: newStats });
         return newStats;
       });
 
@@ -135,9 +139,9 @@ export function usePlayerStats() {
       };
 
     } catch (error) {
-      console.error('Error in updateStats:', error);
+      console.error('❌ Error in updateStats:', error);
     }
-  }, [user?.wallet?.address, stats, calculateXP]);
+  }, [user?.wallet?.address, stats, calculateXP, ensName]);
 
   // Load initial stats
   useEffect(() => {
