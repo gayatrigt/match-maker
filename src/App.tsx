@@ -33,7 +33,7 @@ function App() {
           theme: 'light',
           accentColor: '#FF8B8B',
           showWalletLoginFirst: false,
-          walletList: ['detected_wallets'],
+          walletList: ['wallet_connect'],
         }
       }}
     >
