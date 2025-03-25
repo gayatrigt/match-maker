@@ -11,6 +11,11 @@ html, body {
   font-size: 16px;
 }
 
+/* Force Minecraftia font everywhere */
+* {
+  font-family: 'Minecraftia', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
+}
+
 body {
   position: relative;
   background: url('/background.jpg') no-repeat center center fixed;
@@ -77,8 +82,13 @@ body::before {
   font-family: 'Minecraftia', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
 }
 
-[data-privy-dialog] * {
-  font-family: inherit !important;
+/* Override any Privy font styles */
+[data-privy-dialog] *,
+[data-privy-dialog] *::before,
+[data-privy-dialog] *::after {
+  font-family: 'Minecraftia', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
+  -webkit-font-smoothing: none !important;
+  -moz-osx-font-smoothing: grayscale !important;
 }
 
 [data-privy-dialog] [role="dialog"] {
@@ -88,7 +98,7 @@ body::before {
 [data-privy-dialog] h1,
 [data-privy-dialog] h2,
 [data-privy-dialog] h3 {
-  font-size: 0.875rem !important;
+  font-size: 14px !important;
   line-height: 1.4 !important;
   margin-bottom: 1rem !important;
 }
@@ -98,7 +108,7 @@ body::before {
 [data-privy-dialog] div,
 [data-privy-dialog] input,
 [data-privy-dialog] button {
-  font-size: 0.75rem !important;
+  font-size: 12px !important;
   line-height: 1.4 !important;
 }
 
@@ -111,6 +121,14 @@ body::before {
 [data-privy-dialog] .wallet-option-button {
   margin-bottom: 0.5rem !important;
   padding: 0.75rem !important;
+}
+
+/* Override specific Privy elements */
+.privy-dialog *,
+.privy-dialog *::before,
+.privy-dialog *::after,
+[class*="privy-"] {
+  font-family: 'Minecraftia', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
 }
 
 /* Mobile adjustments */
@@ -131,7 +149,7 @@ body::before {
   [data-privy-dialog] h1,
   [data-privy-dialog] h2,
   [data-privy-dialog] h3 {
-    font-size: 0.75rem !important;
+    font-size: 12px !important;
   }
 
   [data-privy-dialog] p,
@@ -139,7 +157,7 @@ body::before {
   [data-privy-dialog] div,
   [data-privy-dialog] input,
   [data-privy-dialog] button {
-    font-size: 0.675rem !important;
+    font-size: 10px !important;
   }
 
   [data-privy-dialog] button {
