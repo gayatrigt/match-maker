@@ -662,4 +662,308 @@
     font-size: 0.9rem;
     padding: 0.5rem 1rem !important;
   }
+}
+
+.mode-indicator {
+  background: rgba(0, 0, 0, 0.8);
+  color: white;
+  padding: 10px 20px;
+  border-radius: 5px;
+  margin: 10px 0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.combo-counter {
+  color: #ffd700;
+  font-weight: bold;
+  animation: pulse 0.5s infinite;
+}
+
+.memory-phase-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.8);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  color: white;
+  z-index: 1000;
+}
+
+.memory-phase-overlay h3 {
+  font-size: 2em;
+  margin-bottom: 20px;
+}
+
+.memory-phase-overlay .countdown {
+  font-size: 4em;
+  color: #ffd700;
+}
+
+.card-button.invisible {
+  background: #444;
+  color: transparent;
+}
+
+@keyframes pulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.1); }
+  100% { transform: scale(1); }
+}
+
+/* Chaos mode animation */
+@keyframes shuffle {
+  0% { transform: translateX(0); }
+  25% { transform: translateX(5px); }
+  75% { transform: translateX(-5px); }
+  100% { transform: translateX(0); }
+}
+
+.chaos-mode .card-button {
+  animation: shuffle 0.5s ease-in-out;
+}
+
+/* Speed Rush mode styles */
+.speed-rush .timer {
+  color: #ff4444;
+  font-weight: bold;
+  animation: pulse 1s infinite;
+}
+
+/* Memory Master mode styles */
+.memory-master .card-button {
+  transition: opacity 0.3s ease;
+}
+
+.memory-master .card-button.hidden {
+  opacity: 0.1;
+}
+
+/* Flash Focus mode styles */
+.flash-focus .card-button {
+  transition: transform 0.3s ease;
+}
+
+.flash-focus .card-button:hover {
+  transform: scale(1.05);
+}
+
+.mode-intro-dialog {
+  background: rgba(0, 0, 0, 0.95);
+  padding: 1.5rem;
+  max-width: 400px;
+  width: 90%;
+  text-align: center;
+  animation: fadeIn 0.3s ease-in-out;
+  border: 4px solid #92cc41 !important;
+}
+
+.mode-intro-dialog h2 {
+  color: #92cc41;
+  margin-bottom: 1rem;
+  font-size: 1.5rem;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.mode-rules {
+  color: #fff;
+  margin-bottom: 1.5rem;
+  text-align: center;
+}
+
+.mode-description {
+  font-size: 1rem;
+  margin-bottom: 1rem;
+  color: #209CEE;
+  line-height: 1.3;
+}
+
+.mode-mechanics {
+  background: rgba(255, 255, 255, 0.05);
+  padding: 0.75rem;
+  border-radius: 4px;
+  margin-bottom: 1rem;
+}
+
+.mode-mechanics ul {
+  list-style: none;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.5rem;
+}
+
+.mode-mechanics li {
+  margin: 0;
+  padding: 0.25rem 0.5rem;
+  font-size: 0.9rem;
+  line-height: 1.2;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 4px;
+  color: #FF8B8B;
+}
+
+.set-progress {
+  text-align: center;
+  margin-top: 1rem;
+  color: #209CEE;
+  font-size: 0.9rem;
+}
+
+.mode-intro-dialog .nes-btn {
+  margin-top: 1rem;
+  font-size: 1rem;
+  padding: 0.5rem 1.5rem;
+  background-color: #92cc41 !important;
+  color: white;
+  min-width: 120px;
+}
+
+.mode-intro-dialog .nes-btn:hover {
+  transform: scale(1.05);
+  background-color: #a1e44a !important;
+}
+
+@media (max-width: 768px) {
+  .mode-intro-dialog {
+    padding: 1rem;
+    width: 95%;
+    max-width: 320px;
+  }
+
+  .mode-intro-dialog h2 {
+    font-size: 1.2rem;
+    margin-bottom: 0.75rem;
+  }
+
+  .mode-description {
+    font-size: 0.9rem;
+  }
+
+  .mode-mechanics li {
+    font-size: 0.8rem;
+    padding: 0.2rem 0.4rem;
+  }
+
+  .set-progress {
+    font-size: 0.8rem;
+  }
+
+  .mode-intro-dialog .nes-btn {
+    font-size: 0.9rem;
+    padding: 0.4rem 1rem;
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.game-over-dialog {
+  background: rgba(0, 0, 0, 0.95);
+  padding: 2rem;
+  max-width: 500px;
+  width: 90%;
+  text-align: center;
+  animation: fadeIn 0.3s ease-in-out;
+  border: 4px solid #e76e55 !important;
+}
+
+.game-over-dialog h2 {
+  color: #e76e55;
+  font-size: 2rem;
+  margin-bottom: 1.5rem;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+}
+
+.game-stats {
+  background: rgba(255, 255, 255, 0.1);
+  padding: 1.5rem;
+  border-radius: 8px;
+  margin-bottom: 2rem;
+}
+
+.game-stats p {
+  color: #fff;
+  font-size: 1.1rem;
+  margin: 0.75rem 0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.5rem 1rem;
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 4px;
+}
+
+.game-stats span {
+  font-weight: bold;
+  font-size: 1.2rem;
+}
+
+.game-over-buttons {
+  display: flex;
+  justify-content: center;
+  gap: 1rem;
+}
+
+.game-over-buttons .nes-btn {
+  min-width: 150px;
+  font-size: 1.1rem;
+  padding: 0.75rem 1.5rem;
+}
+
+.game-over-buttons .nes-btn.is-primary {
+  background-color: #92cc41 !important;
+}
+
+.game-over-buttons .nes-btn.is-primary:hover {
+  transform: scale(1.05);
+  background-color: #a1e44a !important;
+}
+
+@media (max-width: 768px) {
+  .game-over-dialog {
+    padding: 1.5rem;
+    max-width: 90%;
+  }
+
+  .game-over-dialog h2 {
+    font-size: 1.5rem;
+    margin-bottom: 1rem;
+  }
+
+  .game-stats {
+    padding: 1rem;
+  }
+
+  .game-stats p {
+    font-size: 0.9rem;
+    padding: 0.4rem 0.75rem;
+  }
+
+  .game-stats span {
+    font-size: 1rem;
+  }
+
+  .game-over-buttons .nes-btn {
+    min-width: 120px;
+    font-size: 0.9rem;
+    padding: 0.5rem 1rem;
+  }
 } 

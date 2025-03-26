@@ -4,6 +4,7 @@ import { usePrivy } from '@privy-io/react-auth';
 import { usePlayerStats } from '../hooks/usePlayerStats';
 import { ALL_WORD_PAIRS } from '../data/wordPairs';
 import { TIPS } from '../data/tips';
+import { GAME_MODES, GameMode } from '../data/gameModes';
 import 'nes.css/css/nes.min.css';
 import './Game.css';
 
@@ -22,6 +23,13 @@ const Game = () => {
   const [isShaking, setIsShaking] = useState(false);
   const [timeLeft, setTimeLeft] = useState(TIMER_DURATION);
   const [showGameStart, setShowGameStart] = useState(false);
+  const [currentGameMode, setCurrentGameMode] = useState<GameMode>(GAME_MODES[0]);
+  const [lastMatchTime, setLastMatchTime] = useState<number>(0);
+  const [comboCount, setComboCount] = useState(0);
+  const [showMemoryPhase, setShowMemoryPhase] = useState(false);
+  const [cardVisibility, setCardVisibility] = useState<{[key: number]: boolean}>({});
+  const [showModeIntro, setShowModeIntro] = useState(false);
+  const [showGameOver, setShowGameOver] = useState(false);
 
   const {
     cards,
@@ -51,9 +59,14 @@ const Game = () => {
   useEffect(() => {
     const updatePlayerStats = async () => {
       if (user?.wallet?.address && score > 0) {
-        const response = await updateStats(score);
-        if (response) {
-          setHighestScore(Math.max(response.score, highestScore));
+        console.log('Updating stats from score effect. Current score:', score);
+        try {
+          const response = await updateStats(score);
+          if (response) {
+            setHighestScore(Math.max(response.score, highestScore));
+          }
+        } catch (error) {
+          console.error('Error updating stats:', error);
         }
       }
     };
@@ -61,9 +74,38 @@ const Game = () => {
     updatePlayerStats();
   }, [score, user?.wallet?.address]);
 
-  // Timer effect - only run when gameStarted is true
+  // Update game mode effect to handle initialization properly
   useEffect(() => {
-    let timer: NodeJS.Timeout;
+    const modeIndex = Math.floor(currentSet / 2) % GAME_MODES.length;
+    const newMode = GAME_MODES[modeIndex];
+    console.log('Updating game mode for set:', currentSet, 'New mode:', newMode.name);
+    
+    setCurrentGameMode(newMode);
+    setTimeLeft(newMode.timeLimit);
+    
+    // Reset states
+    setComboCount(0);
+    setCardVisibility({});
+    
+    // Show mode intro for new modes
+    if (currentSet % 2 === 0) {
+      console.log('New mode detected, showing intro');
+      setShowModeIntro(true);
+      setShowGameStart(false);
+      setGameStarted(false);
+    }
+    
+    // Handle memory phase mode
+    if (newMode.specialRules.memoryPhase) {
+      setShowMemoryPhase(true);
+      const timer = setTimeout(() => setShowMemoryPhase(false), 5000);
+      return () => clearTimeout(timer);
+    }
+  }, [currentSet]);
+
+  // Update timer effect
+  useEffect(() => {
+    let timer: NodeJS.Timeout | null = null;
     
     if (gameStarted && timeLeft > 0) {
       timer = setInterval(() => {
@@ -80,51 +122,107 @@ const Game = () => {
     return () => {
       if (timer) clearInterval(timer);
     };
-  }, [gameStarted, timeLeft]);
+  }, [gameStarted]);
+
+  // Handle card shuffling for Chaos Mode
+  useEffect(() => {
+    let shuffleTimer: NodeJS.Timeout;
+    if (gameStarted && currentGameMode.specialRules.shuffleInterval) {
+      shuffleTimer = setInterval(() => {
+        const shuffledCards = [...cards].sort(() => Math.random() - 0.5);
+        setCards(shuffledCards);
+      }, currentGameMode.specialRules.shuffleInterval * 1000);
+    }
+    return () => {
+      if (shuffleTimer) clearInterval(shuffleTimer);
+    };
+  }, [gameStarted, currentGameMode]);
 
   const getRandomTip = useCallback(() => {
     const randomIndex = Math.floor(Math.random() * TIPS.length);
     return TIPS[randomIndex];
   }, []);
 
-  const handleTimeUp = () => {
-    showMessage("Time's up!", 'error');
+  // Update handleGameStart to properly initialize new sets
+  const handleGameStart = () => {
+    console.log('Starting game mode:', currentGameMode.name, 'for set:', currentSet);
+    
+    // Clear any existing states
+    setSelectedCards([]);
     setMatchedPairs(0);
-    setGameStarted(false); // Stop the timer
+    setComboCount(0);
+    
+    // Initialize the current set
     initializeGame(currentSet);
-    setTimeLeft(TIMER_DURATION);
+    
+    // Clear dialogs
+    setShowGameStart(false);
+    setShowModeIntro(false);
+    setShowTip(false);
+    
+    // Start the game
+    setGameStarted(true);
+    setTimeLeft(currentGameMode.timeLimit);
+    
+    console.log('Game started with timeLimit:', currentGameMode.timeLimit);
   };
 
-  // Move to next set with tip
+  // Update handleTimeUp to show game over dialog
+  const handleTimeUp = () => {
+    console.log('Time up! Final score:', score);
+    setGameStarted(false);
+    setShowGameOver(true);
+    setIsProcessing(false);
+  };
+
+  // Update moveToNextSet to properly handle transitions
   const moveToNextSet = async () => {
     const nextSetIndex = currentSet + 1;
-    console.log('Attempting to move to next set:', nextSetIndex, 'Total sets:', ALL_WORD_PAIRS.length);
+    console.log('Moving to next set:', nextSetIndex, 'Total sets:', ALL_WORD_PAIRS.length);
     
     if (nextSetIndex < ALL_WORD_PAIRS.length) {
-      // Calculate the total score after completing this set
-      const newScore = score;
-      
-      if (user?.wallet?.address) {
-        console.log('Updating stats');
-        try {
-          const response = await updateStats(Math.max(newScore, highestScore));
-          
+      try {
+        // Update stats first
+        if (user?.wallet?.address) {
+          const response = await updateStats(score);
           if (response) {
             setHighestScore(Math.max(response.score, highestScore));
-            showMessage("Set Complete!", 'success');
           }
-        } catch (error) {
-          console.error('Error updating stats:', error);
         }
-      } else {
-        console.log('No wallet address found when completing set');
+        
+        // Show completion message
         showMessage("Set Complete!", 'success');
+        
+        // Clear game states
+        setGameStarted(false);
+        setSelectedCards([]);
+        setMatchedPairs(0);
+        setComboCount(0);
+        setIsProcessing(false);
+        
+        // Update to next set
+        setCurrentSet(nextSetIndex);
+        
+        // Determine if showing tip or new mode
+        const isNewMode = nextSetIndex % 2 === 0;
+        
+        if (isNewMode) {
+          // For even-numbered sets, show mode intro
+          console.log('Showing new mode intro for set:', nextSetIndex);
+          setShowModeIntro(true);
+          setShowTip(false);
+        } else {
+          // For odd-numbered sets, show tip
+          console.log('Showing tip for set:', nextSetIndex);
+          setCurrentTip(getRandomTip());
+          setShowTip(true);
+        }
+        
+        console.log('Set transition complete. New set:', nextSetIndex, 'New mode:', isNewMode);
+      } catch (error) {
+        console.error('Error during set transition:', error);
+        showMessage("Error transitioning to next set", 'error');
       }
-      
-      setGameStarted(false); // Stop the timer
-      setCurrentTip(getRandomTip());
-      setShowTip(true);
-      setCurrentSet(nextSetIndex);
     } else {
       showMessage("Game Complete!", 'success');
     }
@@ -136,6 +234,8 @@ const Game = () => {
       resetGame();
       initializeGame(0);
       setShowGameStart(true);
+      setGameStarted(false); // Ensure game starts in stopped state
+      setTimeLeft(currentGameMode.timeLimit);
       
       // Load initial stats
       if (user?.wallet?.address) {
@@ -148,12 +248,6 @@ const Game = () => {
       console.error('Error starting game:', error);
       showMessage('Failed to start game. Please try again.', 'error');
     }
-  };
-
-  const handleGameStart = () => {
-    setShowGameStart(false);
-    setGameStarted(true);
-    setTimeLeft(TIMER_DURATION);
   };
 
   const handleContinueAfterTip = () => {
@@ -169,98 +263,167 @@ const Game = () => {
     setTimeout(() => setIsShaking(false), 500);
   };
 
-  // Handle card click with speed bonus
+  // Modified handleCardClick to include special rules
   const handleCardClick = (cardId: number) => {
-    if (isProcessing || cards[cardId].isMatched) return;
+    if (isProcessing || cards[cardId].isMatched || showMemoryPhase || !gameStarted) return;
 
     const updatedCards = [...cards];
     const clickedCard = updatedCards[cardId];
 
-    // If it's the first selection, start the timer
+    // Prevent clicking the same card
+    if (selectedCards.includes(cardId)) return;
+
+    // Handle invisible cards mode
+    if (currentGameMode.specialRules.invisibleCards) {
+      setCardVisibility(prev => ({ ...prev, [cardId]: true }));
+      setTimeout(() => {
+        setCardVisibility(prev => ({ ...prev, [cardId]: false }));
+      }, currentGameMode.specialRules.cardFlipDelay || 1000);
+    }
+
+    // First card selection
     if (selectedCards.length === 0) {
       clickedCard.isSelected = true;
-      setCards(updatedCards);
+    setCards(updatedCards);
       setSelectedCards([cardId]);
       return;
     }
 
-    // If it's the second selection (matching attempt)
+    // Second card selection (matching attempt)
     if (selectedCards.length === 1) {
       const firstCard = cards[selectedCards[0]];
       
-      // Prevent matching two terms or two definitions
+      // Prevent matching same type cards
       if (firstCard.type === clickedCard.type) {
-        updatedCards[selectedCards[0]].isSelected = false;
-        setCards(updatedCards);
+        // Use a single state update
+        const newCards = [...cards];
+        newCards[selectedCards[0]].isSelected = false;
+        newCards[cardId].isSelected = true;
+        setCards(newCards);
         setSelectedCards([cardId]);
-        clickedCard.isSelected = true;
         return;
       }
 
       setIsProcessing(true);
-      updatedCards[cardId].isSelected = true;
+      clickedCard.isSelected = true;
       setCards(updatedCards);
 
-      const secondCard = clickedCard;
-
-      const isMatch = ALL_WORD_PAIRS[currentSet].some(pair => 
-        (pair.term === firstCard.text && pair.definition === secondCard.text) ||
-        (pair.definition === firstCard.text && pair.term === secondCard.text)
-      );
-
-      if (isMatch) {
-        updatedCards[selectedCards[0]].isMatched = true;
-        updatedCards[cardId].isMatched = true;
-        updatedCards[selectedCards[0]].isSelected = false;
-        updatedCards[cardId].isSelected = false;
-        setCards(updatedCards);
-        setSelectedCards([]);
-        setMatchedPairs(prev => prev + 1);
-        setScore(prev => prev + 1);
-        setIsProcessing(false);
-      } else {
-        // Find the correct match for the first selected card
-        const correctPair = ALL_WORD_PAIRS[currentSet].find(pair => 
-          (firstCard.type === 'term' && pair.term === firstCard.text) ||
-          (firstCard.type === 'definition' && pair.definition === firstCard.text)
+        const isMatch = ALL_WORD_PAIRS[currentSet].some(pair => 
+        (pair.term === firstCard.text && pair.definition === clickedCard.text) ||
+        (pair.definition === firstCard.text && pair.term === clickedCard.text)
         );
-        
-        const correct = firstCard.type === 'term' ? correctPair?.definition : correctPair?.term;
 
-        setShowSaveScore(false);
-        setCorrectAnswer('');
-        
-        // Trigger screen shake for wrong answer
-        triggerScreenShake();
-        
-        setTimeout(() => {
-          setCorrectAnswer(correct || '');
-          updatedCards[selectedCards[0]].isIncorrect = true;
-          updatedCards[cardId].isIncorrect = true;
-          setCards(updatedCards);
-          setShowSaveScore(true);
-        }, 50);
-
-        setTimeout(() => {
-          const resetCards = [...updatedCards];
-          resetCards[selectedCards[0]].isIncorrect = false;
-          resetCards[cardId].isIncorrect = false;
-          resetCards[selectedCards[0]].isSelected = false;
-          resetCards[cardId].isSelected = false;
-          setCards(resetCards);
-          setSelectedCards([]);
-          setIsProcessing(false);
-        }, 500);
+        if (isMatch) {
+        handleCorrectMatch(firstCard, clickedCard, updatedCards, cardId);
+      } else {
+        handleIncorrectMatch(firstCard, clickedCard, updatedCards);
       }
     }
   };
 
+  // Separate correct match handling for cleaner code
+  const handleCorrectMatch = (firstCard: any, clickedCard: any, updatedCards: any[], cardId: number) => {
+    const now = Date.now();
+    const baseXP = 1;
+    let finalXP = baseXP * currentGameMode.pointMultiplier;
+    let newComboCount = comboCount;
+    
+    if (currentGameMode.specialRules.chainBonus && lastMatchTime && (now - lastMatchTime) < 3000) {
+      newComboCount = comboCount + 1;
+      const bonusMultiplier = Math.min(newComboCount * 0.5, 2);
+      finalXP *= (1 + bonusMultiplier);
+      console.log(`Chain bonus! Combo: ${newComboCount}, Bonus: ${bonusMultiplier}x, XP: ${finalXP}`);
+        } else {
+      newComboCount = 1;
+      console.log(`Regular match! Mode: ${currentGameMode.name}, XP: ${finalXP}`);
+    }
+
+    // Batch state updates
+    const newScore = score + 1;
+    const newMatchedPairs = matchedPairs + 1;
+    
+    // Update all states at once
+    Promise.resolve().then(() => {
+      setScore(newScore);
+      setComboCount(newComboCount);
+      setLastMatchTime(now);
+      
+      // Update card states
+      updatedCards[selectedCards[0]].isMatched = true;
+      updatedCards[cardId].isMatched = true;
+        updatedCards[selectedCards[0]].isSelected = false;
+        updatedCards[cardId].isSelected = false;
+        setCards(updatedCards);
+        setSelectedCards([]);
+      setMatchedPairs(newMatchedPairs);
+      setIsProcessing(false);
+      
+      // Update stats if connected
+      if (user?.wallet?.address) {
+        updateStats(newScore, Math.floor(finalXP))
+          .then(response => {
+            if (response) {
+              console.log('Stats updated successfully');
+              setHighestScore(Math.max(response.score, highestScore));
+            }
+          })
+          .catch(console.error);
+      }
+    });
+  };
+
+  // Add helper function for handling incorrect matches
+  const handleIncorrectMatch = (firstCard: any, clickedCard: any, updatedCards: any[]) => {
+    // Reset combo on wrong match
+    setComboCount(0);
+    
+    // Find the correct match
+    const correctPair = ALL_WORD_PAIRS[currentSet].find(pair => 
+      (firstCard.type === 'term' && pair.term === firstCard.text) ||
+      (firstCard.type === 'definition' && pair.definition === firstCard.text)
+    );
+    
+    const correct = firstCard.type === 'term' ? correctPair?.definition : correctPair?.term;
+
+    setShowSaveScore(false);
+    setCorrectAnswer('');
+    
+    // Trigger screen shake
+    triggerScreenShake();
+    
+    setTimeout(() => {
+      setCorrectAnswer(correct || '');
+      updatedCards[selectedCards[0]].isIncorrect = true;
+      updatedCards[cards.indexOf(clickedCard)].isIncorrect = true;
+      setCards(updatedCards);
+      setShowSaveScore(true);
+    }, 50);
+
+    setTimeout(() => {
+      const resetCards = [...updatedCards];
+      resetCards[selectedCards[0]].isIncorrect = false;
+      resetCards[cards.indexOf(clickedCard)].isIncorrect = false;
+      resetCards[selectedCards[0]].isSelected = false;
+      resetCards[cards.indexOf(clickedCard)].isSelected = false;
+      setCards(resetCards);
+      setSelectedCards([]);
+      setIsProcessing(false);
+    }, 500);
+  };
+
+  // Update the matchedPairs effect to handle set completion
   useEffect(() => {
     if (matchedPairs === 5) {
       console.log('Set completed! Current score:', score, 'Current set:', currentSet);
-      setTimeout(() => {
+      // Stop the game immediately to prevent further interactions
+      setGameStarted(false);
+      
+      // Use a fresh timer for transition
+      const timer = setTimeout(() => {
         moveToNextSet();
       }, 1000);
+
+      return () => clearTimeout(timer);
     }
   }, [matchedPairs]);
 
@@ -277,6 +440,95 @@ const Game = () => {
     initializeGame(currentSet);
     setShowSaveScore(false);
   };
+
+  // Add function to handle game restart
+  const handleRestartGame = () => {
+    console.log('Restarting game from beginning');
+    setShowGameOver(false);
+    setScore(0);
+    setCurrentSet(0);
+    setMatchedPairs(0);
+    setComboCount(0);
+    resetGame();
+    initializeGame(0);
+    setTimeLeft(currentGameMode.timeLimit);
+    setGameStarted(true);
+  };
+
+  // Remove GameStartDialog and update ModeIntroductionDialog
+  const ModeIntroductionDialog = () => {
+    const getModeTips = () => {
+      switch (currentGameMode.name) {
+        case 'Classic Mode':
+          return "Match terms with definitions at your own pace";
+        case 'Speed Rush':
+          return "Quick matches earn bonus XP - build those combo chains!";
+        case 'Memory Master':
+          return "Memorize card positions during preview phase";
+        case 'Chain Combo':
+          return "Keep matching quickly to increase your combo multiplier";
+        case 'Chaos Mode':
+          return "Cards shuffle periodically - stay alert!";
+        default:
+          return "Match terms with definitions to earn points and XP";
+      }
+    };
+
+    return (
+      <div className="modal-overlay">
+        <div className="nes-container is-rounded mode-intro-dialog">
+          <h2>{currentGameMode.name}</h2>
+          <div className="mode-rules">
+            <p className="mode-description">{getModeTips()}</p>
+            
+            <div className="mode-mechanics">
+              <ul>
+                <li>⏱️ {currentGameMode.timeLimit}s</li>
+                <li>⭐ {currentGameMode.pointMultiplier}x XP</li>
+                {currentGameMode.specialRules.chainBonus && (
+                  <li>🔗 Chain Bonus Active</li>
+                )}
+                {currentGameMode.specialRules.memoryPhase && (
+                  <li>🧠 5s Preview Phase</li>
+                )}
+                {currentGameMode.specialRules.shuffleInterval && (
+                  <li>🔄 {currentGameMode.specialRules.shuffleInterval}s Shuffle</li>
+                )}
+              </ul>
+            </div>
+
+            <div className="set-progress">
+              <p>Set {currentSet + 1} of {ALL_WORD_PAIRS.length}</p>
+            </div>
+          </div>
+          
+          <button className="nes-btn is-primary" onClick={handleGameStart}>
+            Start
+          </button>
+        </div>
+      </div>
+    );
+  };
+
+  // Add GameOverDialog component
+  const GameOverDialog = () => (
+    <div className="modal-overlay">
+      <div className="nes-container is-rounded game-over-dialog">
+        <h2>Game Over!</h2>
+        <div className="game-stats">
+          <p>Final Score: <span className="nes-text is-primary">{score}</span></p>
+          <p>Best Score: <span className="nes-text is-success">{highestScore}</span></p>
+          <p>Total XP: <span className="nes-text is-warning">{stats?.xp || 0}</span></p>
+          <p>Sets Completed: <span className="nes-text is-primary">{currentSet}</span></p>
+        </div>
+        <div className="game-over-buttons">
+          <button className="nes-btn is-primary" onClick={handleRestartGame}>
+            Play Again
+          </button>
+        </div>
+      </div>
+    </div>
+  );
 
   if (!authenticated) {
     return (
@@ -302,28 +554,15 @@ const Game = () => {
           </div>
         )}
 
-        {/* Game Start Screen */}
-        {showGameStart && (
-          <div className="modal-overlay">
-            <div className="nes-container is-rounded game-start-dialog">
-              <h2>Welcome to Match Maker!</h2>
-              <div className="game-rules">
-                <p>🎮 How to Play:</p>
-                <ul>
-                  <li>Match Web3 terms with their definitions</li>
-                  <li>Complete each set within 60 seconds</li>
-                  <li>Learn as you play and climb the leaderboard</li>
-                </ul>
-              </div>
-              <p className="set-info">Ready to start Set 1?</p>
-              <button className="nes-btn is-primary" onClick={handleGameStart}>
-                Let's Begin!
-              </button>
-            </div>
-          </div>
+        {/* Game Over Dialog */}
+        {showGameOver && <GameOverDialog />}
+
+        {/* Mode Introduction Dialog */}
+        {showModeIntro && (
+          <ModeIntroductionDialog />
         )}
 
-        {/* Top bar */}
+          {/* Top bar */}
         <div className="nes-container is-rounded score-container">
           <div className="score-row">
             <span className="nes-text is-primary">Score: {score}</span>
@@ -341,7 +580,7 @@ const Game = () => {
           </div>
         </div>
 
-        {/* Instructions */}
+          {/* Instructions */}
         <p className="nes-text game-instructions">
           {authenticated ? "Match the Web3 terms with their definitions" : "Please login to play"}
         </p>
@@ -356,7 +595,7 @@ const Game = () => {
           </button>
         )}
 
-        {/* Game grid */}
+          {/* Game grid */}
         {authenticated && (
           <div className="game-grid">
             {/* Terms Column */}
@@ -439,6 +678,22 @@ const Game = () => {
                 </p>
               </div>
             </div>
+          </div>
+        )}
+
+        {/* Show current game mode */}
+        <div className="mode-indicator">
+          <span className="nes-text is-primary">Mode: {currentGameMode.name}</span>
+          {comboCount > 1 && currentGameMode.specialRules.chainBonus && (
+            <span className="combo-counter">Combo x{comboCount}!</span>
+          )}
+        </div>
+
+        {/* Memory Phase Overlay */}
+        {showMemoryPhase && (
+          <div className="memory-phase-overlay">
+            <h3>Memorize the cards!</h3>
+            <div className="countdown">{Math.ceil(timeLeft)}</div>
           </div>
         )}
       </div>
