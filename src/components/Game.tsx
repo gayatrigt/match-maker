@@ -8,11 +8,12 @@ import { GAME_MODES } from '../data/gameModes';
 import type { GameMode } from '../data/gameModes';
 import 'nes.css/css/nes.min.css';
 import './Game.css';
+import WelcomeScreen from './WelcomeScreen';
 
 const TIMER_DURATION = 60; // 60 seconds per set
 
 const Game = () => {
-  const { user, authenticated, login } = usePrivy();
+  const { user, authenticated, login, setAuthenticated } = usePrivy();
   const { updateStats, stats } = usePlayerStats();
   const [isProcessing, setIsProcessing] = useState(false);
   const [showSaveScore, setShowSaveScore] = useState(false);
@@ -527,18 +528,12 @@ const Game = () => {
     </div>
   );
 
+  const handlePlay = () => {
+    login();  // Use Privy's login method
+  };
+
   if (!authenticated) {
-    return (
-      <div className="welcome-container">
-        <div className="nes-container is-rounded welcome-box">
-          <h1>Welcome to Match Maker!</h1>
-          <p>Level up your Web3 knowledge through this memory game.</p>
-          <button className="nes-btn is-primary" onClick={login}>
-            Connect to Start Playing
-          </button>
-        </div>
-      </div>
-    );
+    return <WelcomeScreen onPlay={handlePlay} />;
   }
 
   return (
