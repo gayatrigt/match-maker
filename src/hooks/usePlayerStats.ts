@@ -29,16 +29,33 @@ export function usePlayerStats() {
     xp: 0
   });
 
-  // Calculate XP based on score (1 set = 1 XP)
-  const calculateXP = (score: number): number => {
-    // Each completed set (5 matches) equals 1 XP
-    const completedSets = Math.floor(score / 5);
-    return completedSets;
+  // Calculate XP based on score and game mode
+  const calculateXP = (score: number, gameMode: any): number => {
+    // Base XP for completing a set
+    let baseXP = 1;
+    
+    // Additional XP based on game mode multiplier
+    const modeMultiplier = gameMode?.xpMultiplier || 1;
+    const modeXP = baseXP * modeMultiplier;
+    
+    // Additional XP for special achievements in the mode
+    let bonusXP = 0;
+    if (gameMode?.specialRules?.chainCombo && score > 5) {
+      bonusXP += 1; // Bonus for chain combos
+    }
+    if (gameMode?.specialRules?.memoryPhase) {
+      bonusXP += 1; // Bonus for memory phase completion
+    }
+    if (gameMode?.specialRules?.speedRound && score > 0) {
+      bonusXP += 1; // Bonus for speed rounds
+    }
+    
+    return Math.floor(modeXP + bonusXP);
   };
 
   // Update player stats
-  const updateStats = useCallback(async (newScore: number) => {
-    console.log('🎯 updateStats called with newScore:', newScore);
+  const updateStats = useCallback(async (newScore: number, gameMode: any = null) => {
+    console.log('🎯 updateStats called with newScore:', newScore, 'gameMode:', gameMode);
     
     if (!user?.wallet?.address) {
       console.log('❌ No wallet address found');
@@ -66,10 +83,11 @@ export function usePlayerStats() {
         farcasterUsername,
         ensName,
         newScore,
+        gameMode,
         currentStats: stats
       });
 
-      // First get current stats to ensure we keep the highest score
+      // First get current stats
       const { data: currentStats, error: fetchError } = await supabase
         .from('leaderboard')
         .select('score, xp')
@@ -83,15 +101,21 @@ export function usePlayerStats() {
         return;
       }
 
-      // Calculate the final values
+      // Calculate XP gain for this session
+      const xpGain = calculateXP(newScore, gameMode);
+      
+      // Calculate final values
+      // Score is still highest score achieved
       const finalScore = Math.max(currentStats?.score || 0, newScore);
-      const finalXP = calculateXP(finalScore);
+      // XP accumulates across sessions
+      const finalXP = (currentStats?.xp || 0) + xpGain;
 
       console.log('🎮 Calculated values:', { 
         finalScore, 
         finalXP,
         currentScore: currentStats?.score || 0,
-        currentXP: currentStats?.xp || 0
+        currentXP: currentStats?.xp || 0,
+        xpGain
       });
 
       // Upsert the record with ON CONFLICT DO UPDATE
@@ -101,47 +125,30 @@ export function usePlayerStats() {
           {
             wallet_address: user.wallet.address,
             email: userEmail,
-            ens_name: ensName,
             farcaster_username: farcasterUsername,
+            ens_name: ensName,
             score: finalScore,
             xp: finalXP,
             updated_at: new Date().toISOString()
           },
           {
-            onConflict: 'wallet_address',
-            ignoreDuplicates: false
+            onConflict: 'wallet_address'
           }
-        )
-        .select()
-        .single();
+        );
 
       if (upsertError) {
-        console.error('❌ Error upserting stats:', upsertError.message, upsertError.details);
+        console.error('❌ Error upserting stats:', upsertError);
         return;
       }
 
-      console.log('✅ Upsert successful. Response:', upsertResponse);
-
-      // Update local state with the new values
-      setStats(prev => {
-        const newStats = {
-          ...prev,
-          score: finalScore,
-          xp: finalXP
-        };
-        console.log('🔄 Updating local stats:', { prev, new: newStats });
-        return newStats;
-      });
-
-      return {
-        score: finalScore,
-        xp: finalXP
-      };
-
+      console.log('✅ Stats updated successfully:', upsertResponse);
+      setStats({ score: finalScore, xp: finalXP });
+      return { score: finalScore, xp: finalXP };
     } catch (error) {
       console.error('❌ Error in updateStats:', error);
+      return;
     }
-  }, [user?.wallet?.address, stats, calculateXP, ensName]);
+  }, [user, ensName, stats]);
 
   // Load initial stats
   useEffect(() => {

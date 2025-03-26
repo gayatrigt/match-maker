@@ -4,7 +4,8 @@ import { usePrivy } from '@privy-io/react-auth';
 import { usePlayerStats } from '../hooks/usePlayerStats';
 import { ALL_WORD_PAIRS } from '../data/wordPairs';
 import { TIPS } from '../data/tips';
-import { GAME_MODES, GameMode } from '../data/gameModes';
+import { GAME_MODES } from '../data/gameModes';
+import type { GameMode } from '../data/gameModes';
 import 'nes.css/css/nes.min.css';
 import './Game.css';
 
@@ -22,12 +23,10 @@ const Game = () => {
   const [currentTip, setCurrentTip] = useState('');
   const [isShaking, setIsShaking] = useState(false);
   const [timeLeft, setTimeLeft] = useState(TIMER_DURATION);
-  const [showGameStart, setShowGameStart] = useState(false);
   const [currentGameMode, setCurrentGameMode] = useState<GameMode>(GAME_MODES[0]);
   const [lastMatchTime, setLastMatchTime] = useState<number>(0);
   const [comboCount, setComboCount] = useState(0);
   const [showMemoryPhase, setShowMemoryPhase] = useState(false);
-  const [cardVisibility, setCardVisibility] = useState<{[key: number]: boolean}>({});
   const [showModeIntro, setShowModeIntro] = useState(false);
   const [showGameOver, setShowGameOver] = useState(false);
 
@@ -59,9 +58,9 @@ const Game = () => {
   useEffect(() => {
     const updatePlayerStats = async () => {
       if (user?.wallet?.address && score > 0) {
-        console.log('Updating stats from score effect. Current score:', score);
+        console.log('Updating stats from score effect. Current score:', score, 'Mode:', currentGameMode.name);
         try {
-          const response = await updateStats(score);
+          const response = await updateStats(score, currentGameMode);
           if (response) {
             setHighestScore(Math.max(response.score, highestScore));
           }
@@ -85,13 +84,11 @@ const Game = () => {
     
     // Reset states
     setComboCount(0);
-    setCardVisibility({});
     
     // Show mode intro for new modes
     if (currentSet % 2 === 0) {
       console.log('New mode detected, showing intro');
       setShowModeIntro(true);
-      setShowGameStart(false);
       setGameStarted(false);
     }
     
@@ -156,7 +153,6 @@ const Game = () => {
     initializeGame(currentSet);
     
     // Clear dialogs
-    setShowGameStart(false);
     setShowModeIntro(false);
     setShowTip(false);
     
@@ -184,7 +180,7 @@ const Game = () => {
       try {
         // Update stats first
         if (user?.wallet?.address) {
-          const response = await updateStats(score);
+          const response = await updateStats(score, currentGameMode);
           if (response) {
             setHighestScore(Math.max(response.score, highestScore));
           }
@@ -196,7 +192,7 @@ const Game = () => {
         // Clear game states
         setGameStarted(false);
         setSelectedCards([]);
-        setMatchedPairs(0);
+      setMatchedPairs(0);
         setComboCount(0);
         setIsProcessing(false);
         
@@ -233,13 +229,13 @@ const Game = () => {
     try {
       resetGame();
       initializeGame(0);
-      setShowGameStart(true);
+      setShowModeIntro(true);
       setGameStarted(false); // Ensure game starts in stopped state
       setTimeLeft(currentGameMode.timeLimit);
       
       // Load initial stats
       if (user?.wallet?.address) {
-        const response = await updateStats(0);
+        const response = await updateStats(0, currentGameMode);
         if (response) {
           setHighestScore(response.score);
         }
@@ -275,16 +271,16 @@ const Game = () => {
 
     // Handle invisible cards mode
     if (currentGameMode.specialRules.invisibleCards) {
-      setCardVisibility(prev => ({ ...prev, [cardId]: true }));
-      setTimeout(() => {
-        setCardVisibility(prev => ({ ...prev, [cardId]: false }));
-      }, currentGameMode.specialRules.cardFlipDelay || 1000);
+      updatedCards[cardId].isSelected = true;
+      setCards(updatedCards);
+      setSelectedCards([cardId]);
+      return;
     }
 
     // First card selection
     if (selectedCards.length === 0) {
       clickedCard.isSelected = true;
-    setCards(updatedCards);
+      setCards(updatedCards);
       setSelectedCards([cardId]);
       return;
     }
@@ -308,13 +304,13 @@ const Game = () => {
       clickedCard.isSelected = true;
       setCards(updatedCards);
 
-        const isMatch = ALL_WORD_PAIRS[currentSet].some(pair => 
+      const isMatch = ALL_WORD_PAIRS[currentSet].some(pair => 
         (pair.term === firstCard.text && pair.definition === clickedCard.text) ||
         (pair.definition === firstCard.text && pair.term === clickedCard.text)
-        );
+      );
 
-        if (isMatch) {
-        handleCorrectMatch(firstCard, clickedCard, updatedCards, cardId);
+      if (isMatch) {
+        handleCorrectMatch(updatedCards, cardId);
       } else {
         handleIncorrectMatch(firstCard, clickedCard, updatedCards);
       }
@@ -322,18 +318,18 @@ const Game = () => {
   };
 
   // Separate correct match handling for cleaner code
-  const handleCorrectMatch = (firstCard: any, clickedCard: any, updatedCards: any[], cardId: number) => {
+  const handleCorrectMatch = (updatedCards: any[], cardId: number) => {
     const now = Date.now();
     const baseXP = 1;
-    let finalXP = baseXP * currentGameMode.pointMultiplier;
+    let finalXP = baseXP * (currentGameMode.xpMultiplier || 1);
     let newComboCount = comboCount;
     
-    if (currentGameMode.specialRules.chainBonus && lastMatchTime && (now - lastMatchTime) < 3000) {
+    if (currentGameMode.specialRules.chainCombo && lastMatchTime && (now - lastMatchTime) < 3000) {
       newComboCount = comboCount + 1;
       const bonusMultiplier = Math.min(newComboCount * 0.5, 2);
       finalXP *= (1 + bonusMultiplier);
       console.log(`Chain bonus! Combo: ${newComboCount}, Bonus: ${bonusMultiplier}x, XP: ${finalXP}`);
-        } else {
+    } else {
       newComboCount = 1;
       console.log(`Regular match! Mode: ${currentGameMode.name}, XP: ${finalXP}`);
     }
@@ -351,23 +347,24 @@ const Game = () => {
       // Update card states
       updatedCards[selectedCards[0]].isMatched = true;
       updatedCards[cardId].isMatched = true;
-        updatedCards[selectedCards[0]].isSelected = false;
-        updatedCards[cardId].isSelected = false;
-        setCards(updatedCards);
-        setSelectedCards([]);
+      updatedCards[selectedCards[0]].isSelected = false;
+      updatedCards[cardId].isSelected = false;
+      setCards(updatedCards);
+      setSelectedCards([]);
       setMatchedPairs(newMatchedPairs);
       setIsProcessing(false);
       
       // Update stats if connected
       if (user?.wallet?.address) {
-        updateStats(newScore, Math.floor(finalXP))
+        updateStats(newScore, currentGameMode)
           .then(response => {
             if (response) {
-              console.log('Stats updated successfully');
               setHighestScore(Math.max(response.score, highestScore));
             }
           })
-          .catch(console.error);
+          .catch(error => {
+            console.error('Error updating stats:', error);
+          });
       }
     });
   };
@@ -484,8 +481,8 @@ const Game = () => {
             <div className="mode-mechanics">
               <ul>
                 <li>⏱️ {currentGameMode.timeLimit}s</li>
-                <li>⭐ {currentGameMode.pointMultiplier}x XP</li>
-                {currentGameMode.specialRules.chainBonus && (
+                <li>⭐ {currentGameMode.xpMultiplier}x XP</li>
+                {currentGameMode.specialRules.chainCombo && (
                   <li>🔗 Chain Bonus Active</li>
                 )}
                 {currentGameMode.specialRules.memoryPhase && (
