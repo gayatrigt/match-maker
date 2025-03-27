@@ -190,38 +190,23 @@ const Game = () => {
         // Show completion message
         showMessage("Set Complete!", 'success');
         
-        // Clear game states
+        // Clear game states and update to next set immediately
         setGameStarted(false);
         setSelectedCards([]);
-      setMatchedPairs(0);
+        setMatchedPairs(0);
         setComboCount(0);
         setIsProcessing(false);
-        
-        // Update to next set
         setCurrentSet(nextSetIndex);
         
-        // Determine if showing tip or new mode
-        const isNewMode = nextSetIndex % 2 === 0;
-        
-        if (isNewMode) {
-          // For even-numbered sets, show mode intro
-          console.log('Showing new mode intro for set:', nextSetIndex);
-          setShowModeIntro(true);
-          setShowTip(false);
-        } else {
-          // For odd-numbered sets, show tip
-          console.log('Showing tip for set:', nextSetIndex);
-          setCurrentTip(getRandomTip());
-          setShowTip(true);
-        }
-        
-        console.log('Set transition complete. New set:', nextSetIndex, 'New mode:', isNewMode);
+        // Initialize the next set immediately
+        initializeGame(nextSetIndex);
       } catch (error) {
-        console.error('Error during set transition:', error);
-        showMessage("Error transitioning to next set", 'error');
+        console.error('Error moving to next set:', error);
       }
     } else {
-      showMessage("Game Complete!", 'success');
+      // Handle game completion
+      setShowGameOver(true);
+      setGameStarted(false);
     }
   };
 
@@ -338,6 +323,7 @@ const Game = () => {
     // Batch state updates
     const newScore = score + 1;
     const newMatchedPairs = matchedPairs + 1;
+    const totalPairsInSet = ALL_WORD_PAIRS[currentSet].length;
     
     // Update all states at once
     Promise.resolve().then(() => {
@@ -354,6 +340,12 @@ const Game = () => {
       setSelectedCards([]);
       setMatchedPairs(newMatchedPairs);
       setIsProcessing(false);
+      
+      // Check if set is complete
+      if (newMatchedPairs === totalPairsInSet) {
+        console.log('Set complete! Moving to next set...');
+        moveToNextSet();
+      }
       
       // Update stats if connected
       if (user?.wallet?.address) {
@@ -413,15 +405,8 @@ const Game = () => {
   useEffect(() => {
     if (matchedPairs === 5) {
       console.log('Set completed! Current score:', score, 'Current set:', currentSet);
-      // Stop the game immediately to prevent further interactions
-      setGameStarted(false);
-      
-      // Use a fresh timer for transition
-      const timer = setTimeout(() => {
-        moveToNextSet();
-      }, 1000);
-
-      return () => clearTimeout(timer);
+      // Move to next set immediately
+      moveToNextSet();
     }
   }, [matchedPairs]);
 
