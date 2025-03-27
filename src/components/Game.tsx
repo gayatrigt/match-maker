@@ -13,7 +13,7 @@ import WelcomeScreen from './WelcomeScreen';
 const TIMER_DURATION = 60; // 60 seconds per set
 
 const Game = () => {
-  const { user, authenticated, login, setAuthenticated } = usePrivy();
+  const { user, authenticated, login } = usePrivy();
   const { updateStats, stats } = usePlayerStats();
   const [isProcessing, setIsProcessing] = useState(false);
   const [showSaveScore, setShowSaveScore] = useState(false);
@@ -53,7 +53,7 @@ const Game = () => {
     if (authenticated && !gameStarted) {
       startGame();
     }
-  }, [authenticated]);
+  }, [authenticated, gameStarted]);
 
   // Update stats when score changes
   useEffect(() => {
