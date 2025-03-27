@@ -1,42 +1,35 @@
 .welcome-screen {
   height: 100vh;
+  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
   display: flex;
-  align-items: center;
   justify-content: center;
-  background: #1a1c2c;
-  padding: 20px 20px 20px;
+  align-items: center;
+  padding-top: 20px;
   position: relative;
   overflow: hidden;
 }
 
 .retro-container {
   max-width: 800px;
-  width: 100%;
+  width: 90%;
   text-align: center;
+  background: rgba(0, 0, 0, 0.5);
+  padding: 2rem;
+  border-radius: 20px;
+  box-shadow: 0 0 20px rgba(0, 0, 0, 0.3);
   display: flex;
   flex-direction: column;
-  align-items: center;
   gap: 1vh;
+  z-index: 1;
 }
 
 .retro-title {
   font-family: 'Press Start 2P', cursive;
+  font-size: 2.5rem;
   color: #fff;
-  font-size: 3.5rem;
-  line-height: 1.2;
+  text-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
   margin: 0;
-  text-shadow: 0 4px 0 #ff004d;
-}
-
-.retro-title .line1 {
-  display: block;
-  color: #ff004d;
-  margin-bottom: 0.5rem;
-}
-
-.retro-title .line2 {
-  display: block;
-  color: #fff;
+  letter-spacing: 2px;
 }
 
 .retro-illustration {
@@ -118,21 +111,71 @@
   box-shadow: inset -4px -4px 0 rgba(0,0,0,0.3);
 }
 
+.crypto-coins {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+.coin {
+  position: absolute;
+  width: 40px;
+  height: 40px;
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: center;
+  animation: float 6s ease-in-out infinite;
+  filter: drop-shadow(0 0 10px rgba(255, 255, 255, 0.3));
+}
+
+.ethereum {
+  background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32"><path fill="%238C8C8C" d="M16 32C7.163 32 0 24.837 0 16S7.163 0 16 0s16 7.163 16 16-7.163 16-16 16zm7.994-15.781L16.498 4 9 16.22l7.498 4.353 7.496-4.354zM24 17.616l-7.502 4.351L9 17.617l7.498 10.378L24 17.616z"/></svg>');
+  top: 20%;
+  left: 30%;
+  animation-delay: 1s;
+}
+
+.bitcoin {
+  background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32"><path fill="%23F7931A" d="M16 32C7.163 32 0 24.837 0 16S7.163 0 16 0s16 7.163 16 16-7.163 16-16 16zm7.189-17.98c.314-2.096-1.283-3.223-3.465-3.975l.708-2.84-1.728-.43-.69 2.765c-.454-.114-.92-.22-1.385-.326l.695-2.783L15.596 6l-.708 2.839c-.376-.086-.746-.17-1.104-.26l.002-.009-2.384-.595-.46 1.846s1.283.294 1.256.312c.7.175.826.638.805 1.006l-.806 3.235c.048.012.11.03.18.057l-.183-.045-1.13 4.532c-.086.212-.303.531-.793.41.018.025-1.256-.313-1.256-.313l-.858 1.978 2.25.561c.418.105.828.215 1.231.318l-.715 2.872 1.727.43.708-2.84c.472.127.93.245 1.378.357l-.706 2.828 1.728.43.715-2.866c2.948.558 5.164.333 6.097-2.333.752-2.146-.037-3.385-1.588-4.192 1.13-.26 1.98-1.003 2.207-2.538zm-3.95 5.538c-.533 2.147-4.148.986-5.32.695l.95-3.805c1.172.293 4.929.872 4.37 3.11zm.535-5.569c-.487 1.953-3.495.96-4.47.717l.86-3.45c.975.243 4.118.696 3.61 2.733z"/></svg>');
+  top: 40%;
+  left: 50%;
+  animation-delay: 2s;
+}
+
+.solana {
+  background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32"><path fill="%2314F195" d="M16 0c8.837 0 16 7.163 16 16s-7.163 16-16 16S0 24.837 0 16 7.163 0 16 0zm5.817 10.453H9.85c-.277 0-.541.121-.725.331l-1.654 1.9a.393.393 0 0 0 0 .532l1.654 1.9c.184.21.448.331.725.331h11.967c.277 0 .541-.121.725-.331l1.654-1.9a.393.393 0 0 0 0-.532l-1.654-1.9a.967.967 0 0 0-.725-.331zm0 6.547H9.85c-.277 0-.541.121-.725.331l-1.654 1.9a.393.393 0 0 0 0 .532l1.654 1.9c.184.21.448.331.725.331h11.967c.277 0 .541-.121.725-.331l1.654-1.9a.393.393 0 0 0 0-.532l-1.654-1.9a.967.967 0 0 0-.725-.331z"/></svg>');
+  top: 60%;
+  left: 70%;
+  animation-delay: 0s;
+}
+
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0) rotate(0deg);
+  }
+  50% {
+    transform: translateY(-20px) rotate(10deg);
+  }
+}
+
 .play-button {
-  background: #ff004d;
-  border: none;
-  padding: 15px 30px;
   font-family: 'Press Start 2P', cursive;
   font-size: 1.2rem;
-  color: #fff;
+  background: linear-gradient(45deg, #ff6b6b, #ff8e8e);
+  border: none;
+  padding: 1rem 2rem;
+  color: white;
   cursor: pointer;
+  border-radius: 8px;
   position: relative;
   overflow: hidden;
   transition: transform 0.2s;
+  margin-top: 2rem;
 }
 
 .play-button:hover {
-  transform: translateY(-2px);
+  transform: scale(1.05);
 }
 
 .button-glint {
@@ -143,70 +186,39 @@
   height: 200%;
   background: linear-gradient(
     45deg,
-    transparent 0%,
-    transparent 45%,
-    rgba(255,255,255,0.5) 48%,
-    rgba(255,255,255,0.8) 50%,
-    rgba(255,255,255,0.5) 52%,
-    transparent 55%,
-    transparent 100%
+    transparent,
+    rgba(255, 255, 255, 0.1),
+    transparent
   );
   transform: rotate(45deg);
-  animation: glint 4s linear infinite;
+  animation: glint 3s infinite;
 }
 
 @keyframes glint {
-  0% { transform: rotate(45deg) translateX(-100%); }
-  100% { transform: rotate(45deg) translateX(100%); }
+  0% {
+    transform: translateX(-50%) rotate(45deg);
+  }
+  100% {
+    transform: translateX(100%) rotate(45deg);
+  }
 }
 
 @media (max-width: 768px) {
   .welcome-screen {
     padding-top: 15px;
   }
-
+  
   .retro-title {
-    font-size: 3rem;
+    font-size: 1.8rem;
   }
-
-  .eth-device {
-    width: 140px;
-    height: 220px;
-    padding: 10px;
-  }
-
-  .screen {
-    height: 120px;
-    border-width: 6px;
-    margin-bottom: 15px;
-  }
-
-  .eth-symbol {
-    font-size: 2rem;
-  }
-
-  .d-pad {
-    width: 40px;
-    height: 40px;
-  }
-
-  .d-pad-horizontal {
-    height: 12px;
-    top: 14px;
-  }
-
-  .d-pad-vertical {
-    width: 12px;
-    left: 14px;
-  }
-
-  .button {
-    width: 20px;
-    height: 20px;
-  }
-
+  
   .play-button {
-    padding: 12px 24px;
-    font-size: 0.9rem;
+    font-size: 1rem;
+    padding: 0.8rem 1.6rem;
+  }
+  
+  .coin {
+    width: 30px;
+    height: 30px;
   }
 }

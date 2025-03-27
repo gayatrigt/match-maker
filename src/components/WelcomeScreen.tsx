@@ -8,30 +8,16 @@ interface WelcomeScreenProps {
 const WelcomeScreen: React.FC<WelcomeScreenProps> = ({ onPlay }) => {
   return (
     <div className="welcome-screen">
+      <div className="crypto-coins">
+        <div className="coin ethereum"></div>
+        <div className="coin bitcoin"></div>
+        <div className="coin solana"></div>
+        <div className="coin ethereum" style={{ top: '70%', left: '70%', animationDelay: '3s' }}></div>
+        <div className="coin bitcoin" style={{ top: '30%', left: '80%', animationDelay: '4s' }}></div>
+        <div className="coin solana" style={{ top: '80%', left: '20%', animationDelay: '5s' }}></div>
+      </div>
       <div className="retro-container">
-        <h1 className="retro-title">
-          <span className="line1">CRYPTO</span>
-          <span className="line2">MATCH</span>
-        </h1>
-
-        <div className="retro-illustration">
-          <div className="eth-device">
-            <div className="screen">
-              <div className="eth-symbol">Ξ</div>
-            </div>
-            <div className="device-body">
-              <div className="d-pad">
-                <div className="d-pad-horizontal"></div>
-                <div className="d-pad-vertical"></div>
-              </div>
-              <div className="buttons">
-                <div className="button"></div>
-                <div className="button"></div>
-              </div>
-            </div>
-          </div>
-        </div>
-
+        <h1 className="retro-title">CRYPTO MATCH</h1>
         <button className="play-button" onClick={onPlay}>
           PRESS START
           <div className="button-glint"></div>
