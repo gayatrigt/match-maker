@@ -1,0 +1,222 @@
+.airdrop-container {
+  min-height: calc(100vh - 60px);
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.airdrop-content {
+  width: 100%;
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.airdrop-content .nes-container {
+  background-color: rgba(255, 255, 255, 0.95) !important;
+  backdrop-filter: blur(5px);
+  padding: 2rem !important;
+}
+
+.launch-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+.launch-info h1 {
+  text-align: center;
+  margin-bottom: 0.5rem;
+  font-size: 2rem;
+  color: #209CEE;
+  text-shadow: 2px 2px 0 rgba(0, 0, 0, 0.1);
+}
+
+.progress-section {
+  margin: 0.5rem 0 2rem 0;
+  padding: 1rem;
+  background: rgba(255, 255, 255, 0.95);
+  border-radius: 4px;
+  border: 4px solid #000;
+}
+
+.progress-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.progress-info span {
+  text-align: center;
+  font-size: 1.2rem;
+  color: #209CEE;
+  text-shadow: 1px 1px 0 rgba(255, 255, 255, 0.5);
+}
+
+.nes-progress {
+  height: 24px !important;
+  border-image-repeat: stretch !important;
+}
+
+.info-section {
+  margin-bottom: 1.5rem;
+  padding: 1.5rem;
+  background: rgba(255, 255, 255, 0.95);
+  border: 4px solid #000;
+  border-radius: 4px;
+}
+
+.info-section h3 {
+  margin-bottom: 1rem;
+  color: #FF8B8B;
+  font-size: 1.3rem;
+  text-shadow: 1px 1px 0 rgba(0, 0, 0, 0.1);
+}
+
+.info-section p {
+  line-height: 1.6;
+  margin-bottom: 1rem;
+  font-size: 1.1rem;
+  color: #333;
+}
+
+.qualification-steps {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.step {
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+  padding: 0.5rem;
+  background: rgba(255, 255, 255, 0.9);
+  border: 2px solid #000;
+  border-radius: 4px;
+}
+
+.step p {
+  margin: 0;
+  color: #333;
+}
+
+.step-number {
+  background: #209CEE;
+  color: white;
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid #000;
+  font-weight: bold;
+  flex-shrink: 0;
+}
+
+.token-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.token-detail {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 1rem;
+  background: rgba(255, 255, 255, 0.9);
+  border: 2px solid #000;
+  border-radius: 4px;
+}
+
+.detail-label {
+  color: #333;
+  font-size: 0.9rem;
+  font-weight: bold;
+}
+
+.detail-value {
+  color: #209CEE;
+  font-size: 1.1rem;
+  font-weight: bold;
+}
+
+.nes-list.is-disc {
+  padding-left: 1.5rem;
+}
+
+.nes-list.is-disc li {
+  margin-bottom: 0.75rem;
+  line-height: 1.4;
+  font-size: 1.1rem;
+  color: #333;
+}
+
+.cta-section {
+  text-align: center;
+  margin-top: 2rem;
+  padding: 2rem;
+  background: rgba(255, 255, 255, 0.95);
+  border: 4px solid #000;
+  border-radius: 4px;
+}
+
+.cta-section .nes-btn {
+  margin-bottom: 1rem;
+  padding: 1rem 2rem !important;
+  font-size: 1.2rem !important;
+}
+
+.cta-note {
+  color: #333;
+  font-size: 1rem;
+  margin-top: 1rem;
+  font-weight: bold;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .airdrop-container {
+    padding: 0.5rem;
+  }
+
+  .airdrop-content .nes-container {
+    padding: 1rem !important;
+  }
+
+  .launch-info h1 {
+    font-size: 1.5rem;
+  }
+
+  .progress-info span {
+    font-size: 1rem;
+  }
+
+  .info-section {
+    padding: 1rem;
+  }
+
+  .info-section h3 {
+    font-size: 1.1rem;
+  }
+
+  .info-section p,
+  .nes-list.is-disc li {
+    font-size: 1rem;
+  }
+
+  .token-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .cta-section {
+    padding: 1rem;
+  }
+
+  .cta-section .nes-btn {
+    padding: 0.75rem 1.5rem !important;
+    font-size: 1rem !important;
+  }
+} 

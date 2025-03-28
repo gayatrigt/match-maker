@@ -8,6 +8,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import Game from './components/Game';
 import Navbar from './components/Navbar';
 import Leaderboard from './components/Leaderboard';
+import Airdrop from './components/Airdrop';
 import { GameProvider } from './context/GameContext';
 import './App.css';
 
@@ -57,8 +58,10 @@ function App() {
             <Router>
               <Navbar />
               <Routes>
-                <Route path="/" element={<Game />} />
+                <Route path="/" element={<Airdrop />} />
+                <Route path="/play" element={<Game />} />
                 <Route path="/leaderboard" element={<Leaderboard />} />
+                <Route path="/airdrop" element={<Airdrop />} />
               </Routes>
             </Router>
           </GameProvider>
