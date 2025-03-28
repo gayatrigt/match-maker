@@ -58,7 +58,7 @@ function App() {
             <Router>
               <Navbar />
               <Routes>
-                <Route path="/" element={<Airdrop />} />
+                <Route path="/" element={<Game />} />
                 <Route path="/play" element={<Game />} />
                 <Route path="/leaderboard" element={<Leaderboard />} />
                 <Route path="/airdrop" element={<Airdrop />} />

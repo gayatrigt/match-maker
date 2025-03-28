@@ -7,33 +7,29 @@ import './Navbar.css';
 const Navbar = () => {
   const location = useLocation();
   const currentPath = location.pathname;
-
-  const getLeftNavText = () => {
-    if (currentPath === '/leaderboard') {
-      return { to: '/', text: 'Home' };
-    }
-    return { to: '/leaderboard', text: 'Leaderboard' };
-  };
-
-  const getCenterNavText = () => {
-    if (currentPath === '/airdrop') {
-      return { to: '/', text: 'Home' };
-    }
-    return { to: '/airdrop', text: 'Airdrop' };
-  };
-
-  const leftNav = getLeftNavText();
-  const centerNav = getCenterNavText();
+  const isGameRoute = currentPath === '/' || currentPath === '/play';
 
   return (
     <nav className="navbar">
       <div className="navbar-content">
         <div className="navbar-left">
-          <Link to={leftNav.to} className="nes-text">{leftNav.text}</Link>
+          {isGameRoute ? (
+            <Link to="/leaderboard" className="nes-text">Leaderboard</Link>
+          ) : (
+            <Link to="/play" className="nes-btn is-primary">Play</Link>
+          )}
         </div>
         
         <div className="navbar-center">
-          <Link to={centerNav.to} className="nes-text is-primary">{centerNav.text}</Link>
+          {isGameRoute ? (
+            <Link to="/airdrop" className="nes-text is-primary">Airdrop</Link>
+          ) : (
+            currentPath === '/airdrop' ? (
+              <Link to="/leaderboard" className="nes-text">Leaderboard</Link>
+            ) : (
+              <Link to="/airdrop" className="nes-text is-primary">Airdrop</Link>
+            )
+          )}
         </div>
         
         <div className="navbar-right">
