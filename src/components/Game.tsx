@@ -32,7 +32,7 @@ const Game = () => {
   const [showGameOver, setShowGameOver] = useState(false);
   const [gameOverAnimationComplete, setGameOverAnimationComplete] = useState(false);
 
-  const {
+  const { 
     cards,
     setCards,
     gameStarted,
