@@ -35,7 +35,7 @@ export async function POST(req: Request) {
                 JSON.stringify({
                     frames: {
                         version: 'vNext',
-                        image: 'https://your-domain.com/frame-image.png',
+                        image: 'https://match-maker-lemon.vercel.app/frame-image.png',
                         buttons: [
                             {
                                 label: 'Play Game',
@@ -46,7 +46,7 @@ export async function POST(req: Request) {
                                 action: 'post'
                             }
                         ],
-                        post_url: 'https://your-domain.com/api/frame'
+                        post_url: 'https://match-maker-lemon.vercel.app/api/frame'
                     }
                 }),
                 {
@@ -61,14 +61,14 @@ export async function POST(req: Request) {
                 JSON.stringify({
                     frames: {
                         version: 'vNext',
-                        image: 'https://your-domain.com/leaderboard-image.png',
+                        image: 'https://match-maker-lemon.vercel.app/frame-image.png',
                         buttons: [
                             {
                                 label: 'Back to Game',
                                 action: 'post'
                             }
                         ],
-                        post_url: 'https://your-domain.com/api/frame'
+                        post_url: 'https://match-maker-lemon.vercel.app/api/frame'
                     }
                 }),
                 {
