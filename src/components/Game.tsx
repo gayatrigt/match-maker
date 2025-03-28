@@ -1,9 +1,8 @@
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState } from 'react';
 import { useGame } from '../context/GameContext';
 import { usePrivy } from '@privy-io/react-auth';
 import { usePlayerStats } from '../hooks/usePlayerStats';
 import { ALL_WORD_PAIRS } from '../data/wordPairs';
-import { TIPS } from '../data/tips';
 import { GAME_MODES } from '../data/gameModes';
 import type { GameMode } from '../data/gameModes';
 import 'nes.css/css/nes.min.css';
@@ -21,7 +20,6 @@ const Game = () => {
   const [highestScore, setHighestScore] = useState(0);
   const [showToast, setShowToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
   const [showTip, setShowTip] = useState(false);
-  const [currentTip, setCurrentTip] = useState('');
   const [isShaking, setIsShaking] = useState(false);
   const [timeLeft, setTimeLeft] = useState(TIMER_DURATION);
   const [currentGameMode, setCurrentGameMode] = useState<GameMode>(GAME_MODES[0]);
@@ -135,11 +133,6 @@ const Game = () => {
       if (shuffleTimer) clearInterval(shuffleTimer);
     };
   }, [gameStarted, currentGameMode]);
-
-  const getRandomTip = useCallback(() => {
-    const randomIndex = Math.floor(Math.random() * TIPS.length);
-    return TIPS[randomIndex];
-  }, []);
 
   // Update handleGameStart to properly initialize new sets
   const handleGameStart = () => {
@@ -640,7 +633,7 @@ const Game = () => {
             <div className="tip-modal">
               <div className="nes-container is-rounded">
                 <h3 className="title">Web3 Tip!</h3>
-                <p className="tip-content">{currentTip}</p>
+                <p className="tip-content">{currentGameMode.description}</p>
                 <p className="progress-text">
                   Set {currentSet} Complete! Ready for Set {currentSet + 1}?
                 </p>
