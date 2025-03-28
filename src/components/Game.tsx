@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef, useCallback } from 'react';
 import { useGame } from '../context/GameContext';
 import { usePrivy } from '@privy-io/react-auth';
 import { usePlayerStats } from '../hooks/usePlayerStats';
@@ -8,8 +8,91 @@ import type { GameMode } from '../data/gameModes';
 import 'nes.css/css/nes.min.css';
 import './Game.css';
 import WelcomeScreen from './WelcomeScreen';
+import React from 'react';
 
 const TIMER_DURATION = 60; // 60 seconds per set
+
+// Extracted ModeIntroductionDialog to prevent rerenders
+const ModeIntroductionDialog = React.memo(({ 
+  currentSet, 
+  gameMode, 
+  onStart 
+}: { 
+  currentSet: number, 
+  gameMode: GameMode, 
+  onStart: () => void 
+}) => {
+  // Add console.log to help with debugging - only once per modal display
+  console.log('Rendering ModeIntroductionDialog for set:', currentSet + 1);
+  
+  // Wrap onStart to ensure it doesn't get blocked
+  const handleStart = () => {
+    console.log('Start button clicked');
+    // Call onStart in the next tick to avoid React state batching issues
+    setTimeout(onStart, 0);
+  };
+  
+  const getModeTips = () => {
+    switch (gameMode.name) {
+      case 'Classic Mode':
+        return "Match terms with definitions at your own pace";
+      case 'Speed Rush':
+        return "Quick matches earn bonus XP - build those combo chains!";
+      case 'Memory Master':
+        return "Memorize card positions during preview phase";
+      case 'Chain Combo':
+        return "Keep matching quickly to increase your combo multiplier";
+      case 'Chaos Mode':
+        return "Cards shuffle periodically - stay alert!";
+      default:
+        return "Match terms with definitions to earn points and XP";
+    }
+  };
+
+  return (
+    <div className="modal-overlay">
+      <div className="nes-container is-rounded mode-intro-dialog">
+        <h2>{gameMode.name}</h2>
+        <div className="mode-rules">
+          <p className="mode-description">{getModeTips()}</p>
+          
+          <div className="mode-mechanics">
+            <ul>
+              <li>⏱️ {gameMode.timeLimit}s</li>
+              <li>⭐ {gameMode.xpMultiplier}x XP</li>
+              {gameMode.specialRules.chainCombo && (
+                <li>🔗 Chain Bonus Active</li>
+              )}
+              {gameMode.specialRules.memoryPhase && (
+                <li>🧠 5s Preview Phase</li>
+              )}
+              {gameMode.specialRules.shuffleInterval && (
+                <li>🔄 {gameMode.specialRules.shuffleInterval}s Shuffle</li>
+              )}
+            </ul>
+          </div>
+
+          <div className="set-progress">
+            <p className="set-number-display">Set {currentSet + 1} of {ALL_WORD_PAIRS.length}</p>
+          </div>
+        </div>
+        
+        <button className="nes-btn is-primary" onClick={handleStart}>
+          Start
+        </button>
+      </div>
+    </div>
+  );
+}, (prevProps, nextProps) => {
+  // Special case for first login - always render
+  if (prevProps.currentSet === 0 && nextProps.currentSet === 0) {
+    return false;
+  }
+  
+  // Only rerender if currentSet or gameMode changes
+  return prevProps.currentSet === nextProps.currentSet && 
+         prevProps.gameMode.name === nextProps.gameMode.name;
+});
 
 const Game = () => {
   const { user, authenticated, login } = usePrivy();
@@ -28,6 +111,7 @@ const Game = () => {
   const [showMemoryPhase, setShowMemoryPhase] = useState(false);
   const [showModeIntro, setShowModeIntro] = useState(false);
   const [showGameOver, setShowGameOver] = useState(false);
+  const lastIntroSetRef = useRef<number>(0);
 
   const {
     cards,
@@ -49,6 +133,7 @@ const Game = () => {
   // Start game automatically when user logs in
   useEffect(() => {
     if (authenticated && !gameStarted) {
+      console.log('Auth detected, starting game');
       startGame();
     }
   }, [authenticated, gameStarted]);
@@ -72,8 +157,20 @@ const Game = () => {
     updatePlayerStats();
   }, [score, user?.wallet?.address]);
 
-  // Update game mode effect to handle initialization properly
+  // Update game mode effect to handle initialization properly and prevent duplicate animations
   useEffect(() => {
+    // Don't interfere with the first login modal
+    if (lastIntroSetRef.current === -1) {
+      console.log('Skipping game mode effect for first login');
+      return;
+    }
+    
+    // Skip effect execution if it would cause a modal reload
+    if (showModeIntro) return;
+    
+    // Skip if game is already started to prevent modal from reappearing
+    if (gameStarted) return;
+    
     const modeIndex = Math.floor(currentSet / 2) % GAME_MODES.length;
     const newMode = GAME_MODES[modeIndex];
     console.log('Updating game mode for set:', currentSet, 'New mode:', newMode.name);
@@ -84,20 +181,38 @@ const Game = () => {
     // Reset states
     setComboCount(0);
     
-    // Show mode intro for new modes
-    if (currentSet % 2 === 0) {
-      console.log('New mode detected, showing intro');
-      setShowModeIntro(true);
-      setGameStarted(false);
+    // Single timer id for modal display to prevent double-showing
+    let timerId: NodeJS.Timeout | null = null;
+    
+    // Show mode intro for new modes, but only if we haven't shown it for this set already
+    if (currentSet % 2 === 0 && lastIntroSetRef.current !== currentSet) {
+      console.log('New mode detected, showing intro for set:', currentSet);
+      // Update the ref to track that we've shown the intro for this set
+      lastIntroSetRef.current = currentSet;
+      
+      // Instead of showing right away, debounce it to prevent multiple calls
+      if (timerId) clearTimeout(timerId);
+      timerId = setTimeout(() => {
+        // Show intro dialog
+        setShowModeIntro(true);
+        setGameStarted(false);
+      }, 100);
     }
     
     // Handle memory phase mode
     if (newMode.specialRules.memoryPhase) {
       setShowMemoryPhase(true);
       const timer = setTimeout(() => setShowMemoryPhase(false), 5000);
-      return () => clearTimeout(timer);
+      return () => {
+        clearTimeout(timer);
+        if (timerId) clearTimeout(timerId);
+      };
     }
-  }, [currentSet]);
+    
+    return () => {
+      if (timerId) clearTimeout(timerId);
+    };
+  }, [currentSet, showModeIntro, gameStarted]);
 
   // Update timer effect
   useEffect(() => {
@@ -134,28 +249,36 @@ const Game = () => {
     };
   }, [gameStarted, currentGameMode]);
 
-  // Update handleGameStart to properly initialize new sets
-  const handleGameStart = () => {
+  // Create a stable reference for the handleGameStart function
+  const handleGameStart = useCallback(() => {
     console.log('Starting game mode:', currentGameMode.name, 'for set:', currentSet);
     
-    // Clear any existing states
-    setSelectedCards([]);
-    setMatchedPairs(0);
-    setComboCount(0);
-    
-    // Initialize the current set
-    initializeGame(currentSet);
-    
-    // Clear dialogs
+    // Set the modal closed first to prevent race conditions
     setShowModeIntro(false);
-    setShowTip(false);
     
-    // Start the game
-    setGameStarted(true);
-    setTimeLeft(currentGameMode.timeLimit);
+    // Update lastIntroSetRef to mark that we've handled this set
+    lastIntroSetRef.current = currentSet;
     
-    console.log('Game started with timeLimit:', currentGameMode.timeLimit);
-  };
+    // Short delay before other state changes to ensure modal is closed
+    setTimeout(() => {
+      // Clear any existing states
+      setSelectedCards([]);
+      setMatchedPairs(0);
+      setComboCount(0);
+      
+      // Initialize the current set
+      initializeGame(currentSet);
+      
+      // Clear other dialogs
+      setShowTip(false);
+      
+      // Start the game
+      setGameStarted(true);
+      setTimeLeft(currentGameMode.timeLimit);
+      
+      console.log('Game started with timeLimit:', currentGameMode.timeLimit);
+    }, 50);
+  }, [currentSet, currentGameMode, setGameStarted, initializeGame, setShowModeIntro, setSelectedCards, setMatchedPairs, setComboCount, setTimeLeft, setShowTip]);
 
   // Update handleTimeUp to show game over dialog
   const handleTimeUp = () => {
@@ -186,13 +309,18 @@ const Game = () => {
         // Clear game states and update to next set immediately
         setGameStarted(false);
         setSelectedCards([]);
-      setMatchedPairs(0);
+        setMatchedPairs(0);
         setComboCount(0);
         setIsProcessing(false);
+        
+        // First update the currentSet to prevent unnecessary modal renders
         setCurrentSet(nextSetIndex);
         
-        // Initialize the next set immediately
-        initializeGame(nextSetIndex);
+        // Then initialize the next set after a small delay 
+        // to ensure state updates are processed
+        setTimeout(() => {
+          initializeGame(nextSetIndex);
+        }, 50);
       } catch (error) {
         console.error('Error moving to next set:', error);
       }
@@ -206,11 +334,21 @@ const Game = () => {
   // Start game
   const startGame = async () => {
     try {
+      console.log('Starting new game, first login');
+      
+      // First reset and initialize game state
       resetGame();
       initializeGame(0);
-      setShowModeIntro(true);
       setGameStarted(false); // Ensure game starts in stopped state
       setTimeLeft(currentGameMode.timeLimit);
+      
+      // IMPORTANT: Show the modal with a small delay to ensure React has time to process the state
+      setTimeout(() => {
+        // Force display of the intro modal
+        lastIntroSetRef.current = -1; // Special value for first login
+        setShowModeIntro(true);
+        console.log('Setting showModeIntro to true for first login');
+      }, 100);
       
       // Load initial stats
       if (user?.wallet?.address) {
@@ -431,61 +569,6 @@ const Game = () => {
     setGameStarted(true);
   };
 
-  // Remove GameStartDialog and update ModeIntroductionDialog
-  const ModeIntroductionDialog = () => {
-    const getModeTips = () => {
-      switch (currentGameMode.name) {
-        case 'Classic Mode':
-          return "Match terms with definitions at your own pace";
-        case 'Speed Rush':
-          return "Quick matches earn bonus XP - build those combo chains!";
-        case 'Memory Master':
-          return "Memorize card positions during preview phase";
-        case 'Chain Combo':
-          return "Keep matching quickly to increase your combo multiplier";
-        case 'Chaos Mode':
-          return "Cards shuffle periodically - stay alert!";
-        default:
-          return "Match terms with definitions to earn points and XP";
-      }
-    };
-
-    return (
-      <div className="modal-overlay">
-        <div className="nes-container is-rounded mode-intro-dialog">
-          <h2>{currentGameMode.name}</h2>
-          <div className="mode-rules">
-            <p className="mode-description">{getModeTips()}</p>
-            
-            <div className="mode-mechanics">
-              <ul>
-                <li>⏱️ {currentGameMode.timeLimit}s</li>
-                <li>⭐ {currentGameMode.xpMultiplier}x XP</li>
-                {currentGameMode.specialRules.chainCombo && (
-                  <li>🔗 Chain Bonus Active</li>
-                )}
-                {currentGameMode.specialRules.memoryPhase && (
-                  <li>🧠 5s Preview Phase</li>
-                )}
-                {currentGameMode.specialRules.shuffleInterval && (
-                  <li>🔄 {currentGameMode.specialRules.shuffleInterval}s Shuffle</li>
-                )}
-              </ul>
-            </div>
-
-            <div className="set-progress">
-              <p>Set {currentSet + 1} of {ALL_WORD_PAIRS.length}</p>
-            </div>
-          </div>
-          
-          <button className="nes-btn is-primary" onClick={handleGameStart}>
-            Start
-          </button>
-        </div>
-      </div>
-    );
-  };
-
   // Add GameOverDialog component
   const GameOverDialog = () => (
     <div className="modal-overlay">
@@ -510,9 +593,13 @@ const Game = () => {
     login();  // Use Privy's login method
   };
 
+  // Special handling for rendering based on authentication state
   if (!authenticated) {
     return <WelcomeScreen onPlay={handlePlay} />;
   }
+  
+  // Debug logging for authenticated state
+  console.log('Auth render - showModeIntro:', showModeIntro, 'gameStarted:', gameStarted, 'lastIntroSetRef:', lastIntroSetRef.current);
 
   return (
     <div className={`game-container ${isShaking ? 'shake' : ''}`}>
@@ -524,15 +611,19 @@ const Game = () => {
           </div>
         )}
 
+        {/* Mode Introduction Dialog with console log before rendering */}
+        {(() => {
+          if (showModeIntro) {
+            console.log('Rendering ModeIntroductionDialog on return', currentSet, currentGameMode.name);
+            return <ModeIntroductionDialog currentSet={currentSet} gameMode={currentGameMode} onStart={handleGameStart} />;
+          }
+          return null;
+        })()}
+
         {/* Game Over Dialog */}
         {showGameOver && <GameOverDialog />}
 
-        {/* Mode Introduction Dialog */}
-        {showModeIntro && (
-          <ModeIntroductionDialog />
-        )}
-
-          {/* Top bar */}
+        {/* Top bar */}
         <div className="nes-container is-rounded score-container">
           <div className="score-row">
             <span className="nes-text is-primary">Score: {score}</span>
@@ -550,7 +641,7 @@ const Game = () => {
           </div>
         </div>
 
-          {/* Instructions */}
+        {/* Instructions */}
         <p className="nes-text game-instructions">
           {authenticated ? "Match the Web3 terms with their definitions" : "Please login to play"}
         </p>
@@ -565,7 +656,7 @@ const Game = () => {
           </button>
         )}
 
-          {/* Game grid */}
+        {/* Game grid */}
         {authenticated && (
           <div className="game-grid">
             {/* Terms Column */}
