@@ -272,8 +272,8 @@ const Game = () => {
 
     // Handle invisible cards mode
     if (currentGameMode.specialRules.invisibleCards) {
-      updatedCards[cardId].isSelected = true;
-      setCards(updatedCards);
+    updatedCards[cardId].isSelected = true;
+    setCards(updatedCards);
       setSelectedCards([cardId]);
       return;
     }
@@ -305,12 +305,12 @@ const Game = () => {
       clickedCard.isSelected = true;
       setCards(updatedCards);
 
-      const isMatch = ALL_WORD_PAIRS[currentSet].some(pair => 
+        const isMatch = ALL_WORD_PAIRS[currentSet].some(pair => 
         (pair.term === firstCard.text && pair.definition === clickedCard.text) ||
         (pair.definition === firstCard.text && pair.term === clickedCard.text)
-      );
+        );
 
-      if (isMatch) {
+        if (isMatch) {
         handleCorrectMatch(updatedCards, cardId);
       } else {
         handleIncorrectMatch(firstCard, clickedCard, updatedCards);
@@ -330,7 +330,7 @@ const Game = () => {
       const bonusMultiplier = Math.min(newComboCount * 0.5, 2);
       finalXP *= (1 + bonusMultiplier);
       console.log(`Chain bonus! Combo: ${newComboCount}, Bonus: ${bonusMultiplier}x, XP: ${finalXP}`);
-    } else {
+        } else {
       newComboCount = 1;
       console.log(`Regular match! Mode: ${currentGameMode.name}, XP: ${finalXP}`);
     }
@@ -348,10 +348,10 @@ const Game = () => {
       // Update card states
       updatedCards[selectedCards[0]].isMatched = true;
       updatedCards[cardId].isMatched = true;
-      updatedCards[selectedCards[0]].isSelected = false;
-      updatedCards[cardId].isSelected = false;
-      setCards(updatedCards);
-      setSelectedCards([]);
+        updatedCards[selectedCards[0]].isSelected = false;
+        updatedCards[cardId].isSelected = false;
+        setCards(updatedCards);
+        setSelectedCards([]);
       setMatchedPairs(newMatchedPairs);
       setIsProcessing(false);
       

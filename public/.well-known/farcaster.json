@@ -1,0 +1,18 @@
+{
+    "accountAssociation": {
+        "header": "",
+        "payload": "",
+        "signature": ""
+    },
+    "frame": {
+        "version": "next",
+        "name": "Crypto Match",
+        "iconUrl": "https://your-domain.com/frame-image.png",
+        "homeUrl": "https://your-domain.com/",
+        "imageUrl": "https://your-domain.com/frame-image.png",
+        "buttonTitle": "Play Game",
+        "splashImageUrl": "https://your-domain.com/frame-image.png",
+        "splashBackgroundColor": "#1A1A1A",
+        "webhookUrl": "https://your-domain.com/api/frame"
+    }
+} 

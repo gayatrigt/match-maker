@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Crypto Match - Farcaster Frame</title>
+    
+    <!-- Farcaster Frame Metadata -->
+    <meta property="fc:frame" content='{
+        "version": "vNext",
+        "image": "https://match-maker-lemon.vercel.app/frame-image.png",
+        "buttons": [
+            {
+                "label": "Play Game",
+                "action": "post"
+            },
+            {
+                "label": "Leaderboard",
+                "action": "post"
+            }
+        ],
+        "post_url": "https://match-maker-lemon.vercel.app/api/frame"
+    }' />
+    
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://match-maker-lemon.vercel.app/" />
+    <meta property="og:title" content="Crypto Match" />
+    <meta property="og:description" content="Match crypto pairs and test your knowledge!" />
+    <meta property="og:image" content="https://match-maker-lemon.vercel.app/frame-image.png" />
+
+    <!-- Twitter -->
+    <meta property="twitter:card" content="summary_large_image" />
+    <meta property="twitter:url" content="https://match-maker-lemon.vercel.app/" />
+    <meta property="twitter:title" content="Crypto Match" />
+    <meta property="twitter:description" content="Match crypto pairs and test your knowledge!" />
+    <meta property="twitter:image" content="https://match-maker-lemon.vercel.app/frame-image.png" />
+
+    <!-- Farcaster Frame SDK -->
+    <script src="https://cdn.jsdelivr.net/npm/@farcaster/frame-sdk/dist/index.min.js"></script>
+    
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .game-container {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            margin-top: 20px;
+        }
+        .card {
+            background: #fff;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            padding: 15px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        .card:hover {
+            border-color: #007bff;
+            transform: translateY(-2px);
+        }
+        .score {
+            text-align: center;
+            font-size: 1.2em;
+            margin: 20px 0;
+        }
+        .card.flipped {
+            background: #f8f9fa;
+            border-color: #007bff;
+        }
+        .card.matched {
+            background: #e8f5e9;
+            border-color: #4caf50;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Crypto Match</h1>
+        <div class="score">Score: <span id="score">0</span></div>
+        <div class="game-container" id="gameContainer">
+            <!-- Game cards will be dynamically inserted here -->
+        </div>
+    </div>
+
+    <script>
+        // Initialize Frame SDK
+        const frame = window.farcaster;
+        
+        // Game state
+        let score = 0;
+        let selectedCards = [];
+        let matchedPairs = 0;
+        
+        // Crypto pairs data
+        const cryptoPairs = [
+            { symbol: 'BTC', name: 'Bitcoin' },
+            { symbol: 'ETH', name: 'Ethereum' },
+            { symbol: 'SOL', name: 'Solana' },
+            { symbol: 'DOGE', name: 'Dogecoin' },
+            { symbol: 'ADA', name: 'Cardano' },
+            { symbol: 'DOT', name: 'Polkadot' }
+        ];
+
+        // Create game cards
+        function createGameCards() {
+            const gameContainer = document.getElementById('gameContainer');
+            const cards = [...cryptoPairs, ...cryptoPairs]
+                .sort(() => Math.random() - 0.5)
+                .map((crypto, index) => ({
+                    ...crypto,
+                    id: index,
+                    isFlipped: false,
+                    isMatched: false
+                }));
+
+            gameContainer.innerHTML = cards.map(card => `
+                <div class="card" data-id="${card.id}" onclick="handleCardClick(${card.id})">
+                    <div class="card-content">?</div>
+                </div>
+            `).join('');
+        }
+
+        // Handle card click
+        function handleCardClick(id) {
+            const card = document.querySelector(`[data-id="${id}"]`);
+            if (!card || card.classList.contains('matched') || selectedCards.length >= 2) return;
+
+            card.classList.add('flipped');
+            card.querySelector('.card-content').textContent = cryptoPairs[id % cryptoPairs.length].symbol;
+            selectedCards.push(id);
+
+            if (selectedCards.length === 2) {
+                setTimeout(checkMatch, 1000);
+            }
+        }
+
+        // Check for matches
+        function checkMatch() {
+            const [id1, id2] = selectedCards;
+            const card1 = document.querySelector(`[data-id="${id1}"]`);
+            const card2 = document.querySelector(`[data-id="${id2}"]`);
+
+            if (cryptoPairs[id1 % cryptoPairs.length].symbol === cryptoPairs[id2 % cryptoPairs.length].symbol) {
+                card1.classList.add('matched');
+                card2.classList.add('matched');
+                score += 10;
+                matchedPairs++;
+                document.getElementById('score').textContent = score;
+
+                if (matchedPairs === cryptoPairs.length) {
+                    setTimeout(() => {
+                        alert('Congratulations! You won!');
+                        createGameCards();
+                        score = 0;
+                        matchedPairs = 0;
+                        document.getElementById('score').textContent = score;
+                    }, 500);
+                }
+            } else {
+                card1.classList.remove('flipped');
+                card2.classList.remove('flipped');
+                card1.querySelector('.card-content').textContent = '?';
+                card2.querySelector('.card-content').textContent = '?';
+            }
+
+            selectedCards = [];
+        }
+
+        // Initialize game
+        createGameCards();
+
+        // Frame SDK ready
+        frame.ready({ disableNativeGestures: true });
+    </script>
+</body>
+</html> 
