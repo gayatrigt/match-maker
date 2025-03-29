@@ -24,7 +24,7 @@ interface GameContextType {
   score: number;
   setScore: React.Dispatch<React.SetStateAction<number>>;
   initializeGame: (setIndex: number) => void;
-  resetGame: () => void;
+  resetGame: (preserveScore?: boolean) => void;
 }
 
 const GameContext = createContext<GameContextType | undefined>(undefined);
@@ -79,13 +79,15 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setMatchedPairs(0);
   };
 
-  const resetGame = () => {
+  const resetGame = (preserveScore: boolean = false) => {
     setGameStarted(false);
     setCards([]);
     setSelectedCards([]);
     setMatchedPairs(0);
     setCurrentSet(0);
-    setScore(0);
+    if (!preserveScore) {
+      setScore(0);
+    }
   };
 
   return (

@@ -242,7 +242,7 @@ const Game = () => {
     setTimeout(() => {
       console.log('Starting game...');
       
-      // Clear states
+      // Clear states but preserve score
       setSelectedCards([]);
       setMatchedPairs(0);
       setComboCount(0);
@@ -286,7 +286,7 @@ const Game = () => {
         // Show completion message
         showMessage("Set Complete!", 'success');
         
-        // Clear game states
+        // Clear game states but preserve score
         setGameStarted(false);
         setSelectedCards([]);
         setMatchedPairs(0);
@@ -318,7 +318,7 @@ const Game = () => {
     try {
       isTransitioning.current = true;
       
-      resetGame();
+      resetGame(true); // Preserve score when starting new game
       initializeGame(0);
       
       setGameStarted(false); // Ensure game starts in stopped state
@@ -326,7 +326,7 @@ const Game = () => {
       
       // Load initial stats
       if (user?.wallet?.address) {
-        const response = await updateStats(0, currentGameMode);
+        const response = await updateStats(score, currentGameMode);
         if (response) {
           setHighestScore(response.score);
         }
@@ -528,7 +528,6 @@ const Game = () => {
 
   // Error dialog restart set handler
   const handleRestartSet = () => {
-    setScore(0);
     setMatchedPairs(0);
     setTimeLeft(TIMER_DURATION);
     initializeGame(currentSet);
