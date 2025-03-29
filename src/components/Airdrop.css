@@ -8,7 +8,7 @@
 
 .airdrop-content {
   width: 100%;
-  max-width: 800px;
+  max-width: 1200px;
   margin: 0 auto;
 }
 
@@ -18,32 +18,66 @@
   padding: 2rem !important;
 }
 
-.launch-info {
-  display: flex;
-  flex-direction: column;
-  gap: 2rem;
+.bento-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1.5rem;
+  margin-top: 1rem;
 }
 
-.launch-info h1 {
+.bento-card {
+  background: rgba(255, 255, 255, 0.95);
+  border: 4px solid #000;
+  border-radius: 4px;
+  padding: 1.5rem;
+  transition: transform 0.2s ease;
+}
+
+.bento-card:hover {
+  transform: translateY(-2px);
+}
+
+/* Card-specific layouts */
+.title-card {
+  grid-column: 1 / -1;
   text-align: center;
-  margin-bottom: 0.5rem;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.95), rgba(255, 255, 255, 0.98));
+}
+
+.title-card h1 {
   font-size: 2rem;
+  margin-bottom: 1.5rem;
   color: #209CEE;
   text-shadow: 2px 2px 0 rgba(0, 0, 0, 0.1);
 }
 
-.progress-section {
-  margin: 0.5rem 0 2rem 0;
-  padding: 1rem;
-  background: rgba(255, 255, 255, 0.95);
-  border-radius: 4px;
-  border: 4px solid #000;
+.info-card {
+  grid-column: span 1;
+}
+
+.steps-card {
+  grid-column: span 1;
+}
+
+.token-card {
+  grid-column: span 1;
+}
+
+.rewards-card {
+  grid-column: span 2;
+}
+
+.cta-card {
+  grid-column: 1 / -1;
+  text-align: center;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.95), rgba(255, 255, 255, 0.98));
 }
 
 .progress-info {
   display: flex;
   flex-direction: column;
   gap: 0.75rem;
+  margin-top: 1rem;
 }
 
 .progress-info span {
@@ -58,22 +92,14 @@
   border-image-repeat: stretch !important;
 }
 
-.info-section {
-  margin-bottom: 1.5rem;
-  padding: 1.5rem;
-  background: rgba(255, 255, 255, 0.95);
-  border: 4px solid #000;
-  border-radius: 4px;
-}
-
-.info-section h3 {
+.bento-card h3 {
   margin-bottom: 1rem;
   color: #FF8B8B;
   font-size: 1.3rem;
   text-shadow: 1px 1px 0 rgba(0, 0, 0, 0.1);
 }
 
-.info-section p {
+.bento-card p {
   line-height: 1.6;
   margin-bottom: 1rem;
   font-size: 1.1rem;
@@ -154,16 +180,7 @@
   color: #333;
 }
 
-.cta-section {
-  text-align: center;
-  margin-top: 2rem;
-  padding: 2rem;
-  background: rgba(255, 255, 255, 0.95);
-  border: 4px solid #000;
-  border-radius: 4px;
-}
-
-.cta-section .nes-btn {
+.cta-card .nes-btn {
   margin-bottom: 1rem;
   padding: 1rem 2rem !important;
   font-size: 1.2rem !important;
@@ -177,6 +194,16 @@
 }
 
 /* Responsive Design */
+@media (max-width: 1024px) {
+  .bento-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  
+  .rewards-card {
+    grid-column: 1 / -1;
+  }
+}
+
 @media (max-width: 768px) {
   .airdrop-container {
     padding: 0.5rem;
@@ -186,7 +213,12 @@
     padding: 1rem !important;
   }
 
-  .launch-info h1 {
+  .bento-grid {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+
+  .title-card h1 {
     font-size: 1.5rem;
   }
 
@@ -194,15 +226,11 @@
     font-size: 1rem;
   }
 
-  .info-section {
-    padding: 1rem;
-  }
-
-  .info-section h3 {
+  .bento-card h3 {
     font-size: 1.1rem;
   }
 
-  .info-section p,
+  .bento-card p,
   .nes-list.is-disc li {
     font-size: 1rem;
   }
@@ -211,11 +239,7 @@
     grid-template-columns: 1fr;
   }
 
-  .cta-section {
-    padding: 1rem;
-  }
-
-  .cta-section .nes-btn {
+  .cta-card .nes-btn {
     padding: 0.75rem 1.5rem !important;
     font-size: 1rem !important;
   }
