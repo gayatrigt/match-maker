@@ -132,37 +132,22 @@ export interface FarcasterFrameSDK {
   wallet: FrameWallet;
 }
 
-// lib/farcaster.ts
-
-type VerifyResult = {
-  isValid: boolean;
-  fid?: string;
-  error?: string;
-};
+// Removed unused VerifyResult type
 
 const Navbar = () => {
   const location = useLocation();
   const currentPath = location.pathname;
   const isGameRoute = currentPath === '/' || currentPath === '/play';
   const [isSDKLoaded, setIsSDKLoaded] = useState(false);
-  const [context, setContext] = useState<FrameContext>();
-  const [isInFrame, setIsInFrame] = useState(false);
+  // Removed unused state variables context and isInFrame
 
   const load = async () => {
     try {
-      const context = await sdk.context;
-
-      if (context) {
-        setContext(context);
-        setIsInFrame(true);
-
-      }
-
+      // Still fetch the context but don't store it since it's not being used
+      await sdk.context;
       void sdk.actions.ready();
-
     } catch (err) {
       console.error(err);
-      setIsInFrame(false);
     }
   };
 
@@ -205,4 +190,4 @@ const Navbar = () => {
   );
 };
 
-export default Navbar; 
+export default Navbar;
