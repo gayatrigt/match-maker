@@ -6,6 +6,7 @@ import { usePlayerStats } from '../hooks/usePlayerStats';
 import { ALL_WORD_PAIRS } from '../data/wordPairs';
 import { GAME_MODES } from '../data/gameModes';
 import type { GameMode } from '../data/gameModes';
+import GameFrame from './GameFrame';
 import 'nes.css/css/nes.min.css';
 import './Game.css';
 import WelcomeScreen from './WelcomeScreen';
