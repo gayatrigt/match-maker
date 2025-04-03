@@ -139,13 +139,23 @@ const Navbar = () => {
   const currentPath = location.pathname;
   const isGameRoute = currentPath === '/' || currentPath === '/play';
   const [isSDKLoaded, setIsSDKLoaded] = useState(false);
+  const [context, setContext] = useState<FrameContext>();
   // Removed unused state variables context and isInFrame
 
   const load = async () => {
     try {
       // Still fetch the context but don't store it since it's not being used
       await sdk.context;
+      const sdkcontext = await sdk.context;
+      setContext(context);
       void sdk.actions.ready();
+
+      void sdk.actions.addFrame
+
+      if (context?.user?.fid && context.client?.added === false) {
+        void sdk.actions.addFrame();
+      }
+
     } catch (err) {
       console.error(err);
     }
