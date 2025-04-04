@@ -145,9 +145,9 @@ const Navbar = () => {
   const load = async () => {
     try {
       // Still fetch the context but don't store it since it's not being used
-      await sdk.context;
       const sdkcontext = await sdk.context;
-      setContext(context);
+
+      setContext(sdkcontext);
       void sdk.actions.ready();
 
       void sdk.actions.addFrame
